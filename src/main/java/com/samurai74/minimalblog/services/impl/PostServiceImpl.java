@@ -2,6 +2,7 @@ package com.samurai74.minimalblog.services.impl;
 
 import com.samurai74.minimalblog.domain.PostStatus;
 import com.samurai74.minimalblog.domain.entities.Post;
+import com.samurai74.minimalblog.domain.entities.User;
 import com.samurai74.minimalblog.repositories.PostRepository;
 import com.samurai74.minimalblog.services.CategoryService;
 import com.samurai74.minimalblog.services.PostService;
@@ -34,5 +35,10 @@ public class PostServiceImpl implements PostService {
             return postRepository.findAllByStatusAndTagsContaining(PostStatus.PUBLISHED, tag);
         }
         return postRepository.findAllByStatus(PostStatus.PUBLISHED);
+    }
+
+    @Override
+    public List<Post> getDraftPosts(User author) {
+        return postRepository.findAllByAuthorAndStatus(author, PostStatus.DRAFT);
     }
 }

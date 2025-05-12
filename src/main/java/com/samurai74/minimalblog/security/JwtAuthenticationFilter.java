@@ -29,7 +29,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 var authentication = new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
                 SecurityContextHolder.getContext().setAuthentication(authentication);
                 if(userDetails instanceof  BlogUserDetails){
-                    request.setAttribute("userId",(BlogUserDetails) userDetails);
+                    request.setAttribute("userId", ((BlogUserDetails) userDetails).getUserId());
                 }
             }
         }
