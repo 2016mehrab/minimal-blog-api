@@ -1,0 +1,28 @@
+@categoryUrl=http://localhost:8080/api/v1/categories 
+@auth=http://localhost:8080/api/v1/auth
+@tags=http://localhost:8080/api/v1/tags
+
+###
+GET {{categoryUrl}}
+###
+POST {{categoryUrl}}
+Content-Type: application/json
+
+{
+    "name": "Science"
+}
+###
+DELETE {{categoryUrl}}/7089d8f1-0eb3-4aa8-a995-184f9f452fa3
+
+###
+POST {{auth}}
+Content-Type: application/json
+
+{
+    "email": "user@test.com",
+    "password": "pass"
+}
+
+###
+GET {{tags}}
+###

@@ -6,6 +6,7 @@ import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -21,6 +22,7 @@ import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class AuthenticationServiceImpl implements AuthenticationService {
     private final AuthenticationManager authenticationManager;
     private final UserDetailsService userDetailsService;
@@ -37,9 +39,17 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     @Override
     public String generateToken(UserDetails userDetails) {
         Map<String, Object> claims = new HashMap<>();
+        claims.put("sub", userDetails.getUsername());
+        claims.put("role", userDetails.getAuthorities());
         var currTimeMillis = System.currentTimeMillis();
+
+        log.warn("generated token "+Jwts.builder()
+                .setClaims(claims)
+                .setIssuedAt(new Date(currTimeMillis))
+                .setExpiration(new Date(currTimeMillis+jwtExpiryMs))
+                .signWith(getSigningKey(), SignatureAlgorithm.HS256)
+                .compact());
         return Jwts.builder()
-                .setSubject(userDetails.getUsername())
                 .setClaims(claims)
                 .setIssuedAt(new Date(currTimeMillis))
                 .setExpiration(new Date(currTimeMillis+jwtExpiryMs))

@@ -1,5 +1,8 @@
 package com.samurai74.minimalblog.config;
 
+import com.samurai74.minimalblog.domain.entities.User;
+import com.samurai74.minimalblog.repositories.UserRepository;
+import com.samurai74.minimalblog.security.BlogUserDetailsService;
 import com.samurai74.minimalblog.security.JwtAuthenticationFilter;
 import com.samurai74.minimalblog.services.AuthenticationService;
 import org.springframework.context.annotation.Bean;
@@ -9,6 +12,7 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.factory.PasswordEncoderFactories;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
@@ -22,10 +26,26 @@ public class SecurityConfig {
     }
 
     @Bean
+    public UserDetailsService userDetailsService(UserRepository userRepository) {
+       BlogUserDetailsService blogUserDetailsService = new BlogUserDetailsService(userRepository);
+       String email= "user@test.com";
+       userRepository.findByEmail(email).orElseGet(()->{
+           User newUser = User.builder()
+                   .name("Test User")
+                   .email(email)
+                   .password(passwordEncoder().encode("pass"))
+                   .build();
+           return userRepository.save(newUser);
+       });
+
+       return blogUserDetailsService;
+    }
+
+    @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http, JwtAuthenticationFilter jwtAuthenticationFilter) throws Exception {
         http.authorizeHttpRequests(auth->
                 auth.
-                        requestMatchers(HttpMethod.POST,"/api/v1/auth").permitAll()
+                        requestMatchers(HttpMethod.POST,"/api/v1/auth/**").permitAll()
                         .requestMatchers(HttpMethod.GET,"/api/v1/posts/**").permitAll()
                         .requestMatchers(HttpMethod.GET,"/api/v1/categories/**").permitAll()
                         .requestMatchers(HttpMethod.GET,"/api/v1/tags/**").permitAll()
@@ -42,6 +62,7 @@ public class SecurityConfig {
     public PasswordEncoder passwordEncoder() {
         return PasswordEncoderFactories.createDelegatingPasswordEncoder();
     }
+
     @Bean
     public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
         return config.getAuthenticationManager();
