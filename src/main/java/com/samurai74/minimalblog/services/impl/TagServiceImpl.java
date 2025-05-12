@@ -3,6 +3,7 @@ package com.samurai74.minimalblog.services.impl;
 import com.samurai74.minimalblog.domain.entities.Tag;
 import com.samurai74.minimalblog.repositories.TagRepository;
 import com.samurai74.minimalblog.services.TagService;
+import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -48,7 +49,13 @@ public class TagServiceImpl implements TagService {
             }
             tagRepository.deleteById(tagId);
         });
-
     }
+
+    @Transactional(readOnly = true)
+    @Override
+    public Tag getTagById(UUID tagId) {
+        return tagRepository.findById(tagId).orElseThrow(()->new EntityNotFoundException("No tag with id " + tagId));
+    }
+
 
 }

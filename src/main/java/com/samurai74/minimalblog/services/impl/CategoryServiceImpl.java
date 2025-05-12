@@ -3,6 +3,7 @@ package com.samurai74.minimalblog.services.impl;
 import com.samurai74.minimalblog.domain.entities.Category;
 import com.samurai74.minimalblog.repositories.CategoryRepository;
 import com.samurai74.minimalblog.services.CategoryService;
+import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -42,5 +43,9 @@ public class CategoryServiceImpl implements CategoryService {
              }
              categoryRepository.deleteById(categoryId);
          }
+    }
+    @Transactional(readOnly = true)
+    public Category getCategoryById(UUID categoryId) {
+        return categoryRepository.findById(categoryId).orElseThrow(()->new EntityNotFoundException("category with id " + categoryId + " not found"));
     }
 }

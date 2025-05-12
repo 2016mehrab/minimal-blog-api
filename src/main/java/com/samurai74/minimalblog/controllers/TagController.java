@@ -1,7 +1,7 @@
 package com.samurai74.minimalblog.controllers;
 
 import com.samurai74.minimalblog.domain.dtos.CreateTagRequest;
-import com.samurai74.minimalblog.domain.dtos.TagResponse;
+import com.samurai74.minimalblog.domain.dtos.TagDto;
 import com.samurai74.minimalblog.domain.entities.Tag;
 import com.samurai74.minimalblog.mappers.TagMapper;
 import com.samurai74.minimalblog.services.TagService;
@@ -22,13 +22,13 @@ public class TagController {
     private final TagMapper tagMapper;
 
     @GetMapping
-    public ResponseEntity<List<TagResponse>> getAllTags() {
+    public ResponseEntity<List<TagDto>> getAllTags() {
         List<Tag> tags = tagService.getAllTags();
         return ResponseEntity.ok(tagMapper.toTagResponseList(tags));
     }
 
     @PostMapping
-    public ResponseEntity<List<TagResponse>> createTags(@RequestBody CreateTagRequest request) {
+    public ResponseEntity<List<TagDto>> createTags(@RequestBody CreateTagRequest request) {
         log.info("requested new tags: {}", request.getTags());
         var allTags = tagService.createTags(request.getTags());
         return ResponseEntity.ok(tagMapper.toTagResponseList(allTags));
