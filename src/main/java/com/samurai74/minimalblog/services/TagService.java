@@ -11,4 +11,5 @@ public interface TagService {
     List<Tag> createTags(Set<String> tags);
     void deleteTag(UUID tagId);
     Tag getTagById(UUID tagId);
+    Set<Tag>getTagByIds(Set<UUID> tagIds);
 }

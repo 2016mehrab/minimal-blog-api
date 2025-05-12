@@ -1,5 +1,7 @@
 package com.samurai74.minimalblog.mappers;
 
+import com.samurai74.minimalblog.domain.CreatePostRequest;
+import com.samurai74.minimalblog.domain.dtos.CreatePostRequestDto;
 import com.samurai74.minimalblog.domain.dtos.PostDto;
 import com.samurai74.minimalblog.domain.entities.Post;
 import org.mapstruct.Mapper;
@@ -12,4 +14,5 @@ public interface PostMapper {
     @Mapping(target = "category", source = "category")
     @Mapping(target = "tags", source = "tags")
     PostDto toPostDto(Post post);
+    CreatePostRequest toCreatePostRequest(CreatePostRequestDto postRequestDto);
 }

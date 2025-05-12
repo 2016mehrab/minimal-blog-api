@@ -1,11 +1,13 @@
 package com.samurai74.minimalblog.controllers;
 
+import com.samurai74.minimalblog.domain.dtos.CreatePostRequestDto;
 import com.samurai74.minimalblog.domain.dtos.PostDto;
 import com.samurai74.minimalblog.domain.entities.User;
 import com.samurai74.minimalblog.mappers.PostMapper;
 import com.samurai74.minimalblog.services.PostService;
 import com.samurai74.minimalblog.services.UserService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
@@ -40,4 +42,14 @@ public class PostController {
         List<PostDto> postDtos = posts.stream().map(postMapper::toPostDto).toList();
         return ResponseEntity.ok(postDtos);
     }
+    @PostMapping
+    public ResponseEntity<PostDto> createPost(@RequestBody CreatePostRequestDto requestDto ,
+                                             @RequestAttribute UUID userId ) {
+        User loggedInUser = userService.getUserById(userId);
+        var createPostRequest= postMapper.toCreatePostRequest(requestDto);
+        var savedPost = postService.createPost(loggedInUser, createPostRequest);
+        return new ResponseEntity<PostDto>(postMapper.toPostDto(savedPost), HttpStatus.CREATED);
+
+    }
+
 }
