@@ -19,7 +19,7 @@ import java.util.UUID;
 @AllArgsConstructor
 public class UpdatePostRequestDto {
 
-    @NotBlank(message = "Post ID is required")
+    @NotNull(message = "Post ID is required")
     private UUID id;
 
     @NotBlank(message = "Title is required")

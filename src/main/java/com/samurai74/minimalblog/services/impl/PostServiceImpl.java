@@ -87,6 +87,12 @@ public class PostServiceImpl implements PostService {
         return postRepository.save(existingPost);
     }
 
+    @Transactional(readOnly = true)
+    @Override
+    public Post getPost(UUID postId) {
+        return postRepository.findById(postId).orElseThrow(()->new EntityNotFoundException("Post not found"));
+    }
+
     private Integer calculateReadingTime(String content) {
         if(content==null || content.isEmpty()) return 0;
         int wordCount= content.trim().split("\\s+").length;
