@@ -1,11 +1,15 @@
 package com.samurai74.minimalblog.controllers;
 
+import com.samurai74.minimalblog.domain.UpdatePostRequest;
 import com.samurai74.minimalblog.domain.dtos.CreatePostRequestDto;
 import com.samurai74.minimalblog.domain.dtos.PostDto;
+import com.samurai74.minimalblog.domain.dtos.UpdatePostRequestDto;
+import com.samurai74.minimalblog.domain.entities.Post;
 import com.samurai74.minimalblog.domain.entities.User;
 import com.samurai74.minimalblog.mappers.PostMapper;
 import com.samurai74.minimalblog.services.PostService;
 import com.samurai74.minimalblog.services.UserService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -48,8 +52,18 @@ public class PostController {
         User loggedInUser = userService.getUserById(userId);
         var createPostRequest= postMapper.toCreatePostRequest(requestDto);
         var savedPost = postService.createPost(loggedInUser, createPostRequest);
-        return new ResponseEntity<PostDto>(postMapper.toPostDto(savedPost), HttpStatus.CREATED);
-
+        return new ResponseEntity<>(postMapper.toPostDto(savedPost), HttpStatus.CREATED);
     }
+    @PutMapping(path = "/{id}")
+    public  ResponseEntity<PostDto> updatePost(
+            @PathVariable UUID id,
+            @Valid @RequestBody UpdatePostRequestDto updatePostRequestDto
+            ){
+
+       UpdatePostRequest updatePostRequest =  postMapper.toUpdatePostRequest(updatePostRequestDto);
+       Post updatedPost = postService.updatePost(id, updatePostRequest);
+      return ResponseEntity.ok(postMapper.toPostDto(updatedPost));
+    }
+
 
 }

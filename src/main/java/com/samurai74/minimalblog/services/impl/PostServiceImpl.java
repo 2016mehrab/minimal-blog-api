@@ -3,18 +3,22 @@ package com.samurai74.minimalblog.services.impl;
 import com.samurai74.minimalblog.constant.Constants;
 import com.samurai74.minimalblog.domain.CreatePostRequest;
 import com.samurai74.minimalblog.domain.PostStatus;
+import com.samurai74.minimalblog.domain.UpdatePostRequest;
 import com.samurai74.minimalblog.domain.entities.Post;
+import com.samurai74.minimalblog.domain.entities.Tag;
 import com.samurai74.minimalblog.domain.entities.User;
 import com.samurai74.minimalblog.repositories.PostRepository;
 import com.samurai74.minimalblog.services.CategoryService;
 import com.samurai74.minimalblog.services.PostService;
 import com.samurai74.minimalblog.services.TagService;
+import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -22,7 +26,9 @@ public class PostServiceImpl implements PostService {
     private final PostRepository postRepository;
     private final CategoryService categoryService;
     private final TagService tagService;
+
     @Override
+    @Transactional(readOnly = true)
     public List<Post> getAllPosts(UUID categoryId, UUID tagId) {
         if(categoryId!=null && tagId!=null) {
             var category =categoryService.getCategoryById(categoryId);
@@ -57,6 +63,28 @@ public class PostServiceImpl implements PostService {
                 .tags(tagService.getTagByIds(createPostRequest.getTagIds()))
                 .build();
         return postRepository.save(newPost);
+    }
+
+    @Override
+    @Transactional
+    public Post updatePost(UUID postId, UpdatePostRequest updatePostRequest) {
+        var existingPost = postRepository.findById(postId). orElseThrow(()->new EntityNotFoundException("Post not found"));
+        existingPost.setTitle(updatePostRequest.getTitle());
+        existingPost.setContent(updatePostRequest.getContent());
+        existingPost.setStatus(updatePostRequest.getStatus());
+        existingPost.setReadingTime(calculateReadingTime(updatePostRequest.getContent()));
+        if (!existingPost.getCategory().getId().equals(updatePostRequest.getCategoryId())) {
+           var cat= categoryService.getCategoryById(updatePostRequest.getCategoryId()) ;
+           existingPost.setCategory(cat);
+        }
+        var existingTagIds = existingPost.getTags().stream().map(Tag::getId).collect(Collectors.toSet());
+        var updatedTagIds = updatePostRequest.getTagIds();
+        if (!existingTagIds.equals(updatedTagIds)){
+            var updatedTags = tagService.getTagByIds(updatedTagIds);
+            existingPost.setTags(updatedTags);
+        }
+        // do nothing if category didn't change
+        return postRepository.save(existingPost);
     }
 
     private Integer calculateReadingTime(String content) {
