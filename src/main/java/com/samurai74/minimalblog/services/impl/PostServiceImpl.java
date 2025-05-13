@@ -93,6 +93,15 @@ public class PostServiceImpl implements PostService {
         return postRepository.findById(postId).orElseThrow(()->new EntityNotFoundException("Post not found"));
     }
 
+    @Override
+    @Transactional
+    public void deletePost(UUID postId) {
+        if(!postRepository.existsById(postId)) {
+            throw new EntityNotFoundException("Post not found");
+        }
+        postRepository.deleteById(postId);
+    }
+
     private Integer calculateReadingTime(String content) {
         if(content==null || content.isEmpty()) return 0;
         int wordCount= content.trim().split("\\s+").length;
