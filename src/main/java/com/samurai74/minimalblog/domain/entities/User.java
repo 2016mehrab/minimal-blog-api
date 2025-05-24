@@ -1,5 +1,6 @@
 package com.samurai74.minimalblog.domain.entities;
 
+import com.samurai74.minimalblog.domain.Role;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -32,6 +33,13 @@ public class User {
 
     @Column(nullable = false)
     private LocalDateTime createdAt;
+
+    @Enumerated(EnumType.STRING)
+    private Role role;
+    @Column(name = "reset_token", unique = true)
+    private String resetToken;
+    @Column(name = "reset_token_expiry")
+    private LocalDateTime resetTokenExpiresAt;
 
     @Override
     public boolean equals(Object o) {
