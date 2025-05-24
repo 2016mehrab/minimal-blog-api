@@ -9,6 +9,7 @@ import com.samurai74.minimalblog.domain.entities.User;
 import com.samurai74.minimalblog.mappers.PostMapper;
 import com.samurai74.minimalblog.services.PostService;
 import com.samurai74.minimalblog.services.UserService;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -22,6 +23,7 @@ import java.util.UUID;
 @RestController
 @RequestMapping(path = "/api/v1/posts")
 @RequiredArgsConstructor
+@Tag(name="Post")
 public class PostController {
     private final PostService postService;
     private final PostMapper postMapper;

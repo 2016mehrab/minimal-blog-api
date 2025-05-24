@@ -4,6 +4,7 @@ import com.samurai74.minimalblog.domain.dtos.CategoryDto;
 import com.samurai74.minimalblog.domain.dtos.CreateCategoryRequest;
 import com.samurai74.minimalblog.mappers.CategoryMapper;
 import com.samurai74.minimalblog.services.CategoryService;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -16,6 +17,7 @@ import java.util.UUID;
 @RestController
 @RequestMapping(path = "/api/v1/categories")
 @RequiredArgsConstructor
+@Tag(name="Category")
 public class CategoryController {
     private final CategoryService categoryService;
     private final CategoryMapper categoryMapper;

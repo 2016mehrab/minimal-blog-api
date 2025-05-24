@@ -17,6 +17,7 @@ import java.util.UUID;
 @RequestMapping(path="/api/v1/tags")
 @RequiredArgsConstructor
 @Slf4j
+@io.swagger.v3.oas.annotations.tags.Tag(name="Tag")
 public class TagController {
     private final TagService tagService;
     private final TagMapper tagMapper;

@@ -5,7 +5,9 @@ services:
       - 5432:5432
     restart: always
     environment:
-      POSTGRES_PASSWORD: rootpass
+      POSTGRES_USER: root
+      POSTGRES_PASSWORD: secret
+      POSTGRES_DB: minimal-blog
 
   adminer:
     image: adminer:latest

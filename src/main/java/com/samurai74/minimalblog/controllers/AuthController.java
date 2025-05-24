@@ -3,6 +3,7 @@ package com.samurai74.minimalblog.controllers;
 import com.samurai74.minimalblog.domain.dtos.AuthResponse;
 import com.samurai74.minimalblog.domain.dtos.LoginRequest;
 import com.samurai74.minimalblog.services.AuthenticationService;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
@@ -16,6 +17,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping(path = "/api/v1/auth")
 @RequiredArgsConstructor
 @Slf4j
+@Tag(name = "Authentication")
 public class AuthController {
     private final AuthenticationService authenticationService;
 

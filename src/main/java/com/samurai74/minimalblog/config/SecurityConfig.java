@@ -3,12 +3,14 @@ package com.samurai74.minimalblog.config;
 import com.samurai74.minimalblog.domain.entities.User;
 import com.samurai74.minimalblog.repositories.UserRepository;
 import com.samurai74.minimalblog.security.BlogUserDetailsService;
+import com.samurai74.minimalblog.security.EmailPasswordAuthenticationProvider;
 import com.samurai74.minimalblog.security.JwtAuthenticationFilter;
 import com.samurai74.minimalblog.services.AuthenticationService;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -42,15 +44,21 @@ public class SecurityConfig {
     }
 
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http, JwtAuthenticationFilter jwtAuthenticationFilter) throws Exception {
+    public SecurityFilterChain securityFilterChain(HttpSecurity http, JwtAuthenticationFilter jwtAuthenticationFilter, EmailPasswordAuthenticationProvider emailPasswordAuthenticationProvider) throws Exception {
+        http.authenticationProvider(emailPasswordAuthenticationProvider);
         http.authorizeHttpRequests(auth->
-                auth.
+                auth
                         // first match wins
-                        requestMatchers(HttpMethod.POST,"/api/v1/auth/**").permitAll()
+                        .requestMatchers(HttpMethod.POST,"/api/v1/auth/**").permitAll()
                         .requestMatchers(HttpMethod.GET,"/api/v1/posts/drafts").authenticated()
                         .requestMatchers(HttpMethod.GET,"/api/v1/posts/**").permitAll()
                         .requestMatchers(HttpMethod.GET,"/api/v1/categories/**").permitAll()
                         .requestMatchers(HttpMethod.GET,"/api/v1/tags/**").permitAll()
+                        .requestMatchers(
+                                "/v3/api-docs/**",
+                                "/swagger-ui/**",
+                                "/swagger-ui.html"
+                        ).permitAll()
                         .anyRequest().authenticated()
                 )
                 .csrf(csrf->csrf.disable())
