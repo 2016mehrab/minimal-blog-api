@@ -1,5 +1,6 @@
 package com.samurai74.minimalblog.config;
 
+import com.samurai74.minimalblog.domain.Role;
 import com.samurai74.minimalblog.domain.entities.User;
 import com.samurai74.minimalblog.repositories.UserRepository;
 import com.samurai74.minimalblog.security.BlogUserDetailsService;
@@ -10,7 +11,6 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -30,12 +30,13 @@ public class SecurityConfig {
     @Bean
     public UserDetailsService userDetailsService(UserRepository userRepository) {
        BlogUserDetailsService blogUserDetailsService = new BlogUserDetailsService(userRepository);
-       String email= "user@test.com";
+       String email= "admin@gmail.com";
        userRepository.findByEmail(email).orElseGet(()->{
            User newUser = User.builder()
-                   .name("Test User")
+                   .name("Admin")
                    .email(email)
-                   .password(passwordEncoder().encode("pass"))
+                   .role(Role.ADMIN)
+                   .password(passwordEncoder().encode("adminpass"))
                    .build();
            return userRepository.save(newUser);
        });
@@ -49,8 +50,9 @@ public class SecurityConfig {
         http.authorizeHttpRequests(auth->
                 auth
                         // first match wins
+                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .requestMatchers(HttpMethod.POST,"/api/v1/auth/**").permitAll()
-                        .requestMatchers(HttpMethod.GET,"/api/v1/posts/drafts").authenticated()
+                        .requestMatchers(HttpMethod.GET,"/api/v1/posts/drafts").hasAnyRole("ADMIN", "USER")
                         .requestMatchers(HttpMethod.GET,"/api/v1/posts/**").permitAll()
                         .requestMatchers(HttpMethod.GET,"/api/v1/categories/**").permitAll()
                         .requestMatchers(HttpMethod.GET,"/api/v1/tags/**").permitAll()
