@@ -1,11 +1,12 @@
 package com.samurai74.minimalblog.services.impl;
 
 import com.samurai74.minimalblog.domain.Role;
+import com.samurai74.minimalblog.domain.entities.RefreshToken;
 import com.samurai74.minimalblog.domain.entities.User;
 import com.samurai74.minimalblog.repositories.UserRepository;
+import com.samurai74.minimalblog.security.RefreshTokenService;
 import com.samurai74.minimalblog.services.AuthenticationService;
 import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
@@ -16,6 +17,7 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -27,6 +29,7 @@ import java.security.Key;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -34,12 +37,13 @@ import java.util.Map;
 public class AuthenticationServiceImpl implements AuthenticationService {
     private final AuthenticationManager authenticationManager;
     private final UserDetailsService userDetailsService;
+    private final RefreshTokenService refreshTokenService;
     private  final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
 
     @Value("${jwt.secret}")
     private String secretkey;
-    private final Long jwtExpiryMs = 86400000L;
+    private final Long jwtExpiryMs = 120_000L;
 
     @Override
     public UserDetails authenticate(String email, String password) throws UsernameNotFoundException , BadCredentialsException {
@@ -66,18 +70,22 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     }
 
     @Override
+    @Transactional
+    public RefreshToken getRefreshToken(RefreshToken refreshToken) {
+        return refreshTokenService.rotateToken(refreshToken);
+    }
+
+    @Override
     public String generateToken(UserDetails userDetails) {
         Map<String, Object> claims = new HashMap<>();
         claims.put("sub", userDetails.getUsername());
-        claims.put("role", userDetails.getAuthorities());
+        claims.put("role", userDetails.getAuthorities()
+                        .stream()
+                        .map(GrantedAuthority::getAuthority)
+                        .collect(Collectors.toList())
+                   );
         var currTimeMillis = System.currentTimeMillis();
 
-        log.info("generated token "+Jwts.builder()
-                .setClaims(claims)
-                .setIssuedAt(new Date(currTimeMillis))
-                .setExpiration(new Date(currTimeMillis+jwtExpiryMs))
-                .signWith(getSigningKey(), SignatureAlgorithm.HS256)
-                .compact());
         return Jwts.builder()
                 .setClaims(claims)
                 .setIssuedAt(new Date(currTimeMillis))
@@ -87,7 +95,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     }
 
     @Override
-    public UserDetails validateToken(String token) throws  BadCredentialsException, JwtException {
+    public UserDetails validateToken(String token){
         if(!isTokenValid(token)) {
             throw new BadCredentialsException("Invalid token");
         }
@@ -95,7 +103,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         return userDetailsService.loadUserByUsername(username);
     }
 
-    public boolean isTokenValid(String token) throws JwtException, IllegalArgumentException {
+    public boolean isTokenValid(String token) {
         var jwtParser =Jwts.parserBuilder()
                 .setSigningKey(getSigningKey())
                 .build();
@@ -104,7 +112,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     }
 
 
-    private String extractUsername(String token) throws JwtException {
+    private String extractUsername(String token) {
       Claims claims = Jwts.parserBuilder()
                .setSigningKey(getSigningKey())
                .build()

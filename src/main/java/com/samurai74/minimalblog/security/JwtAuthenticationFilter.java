@@ -22,7 +22,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
         String token = extractToken(request);
         try{
-
             if(token != null) {
                 UserDetails userDetails = authenticationService.validateToken(token);
                 // blogUserDetails will be returned as it's the only one that implements UserDetails

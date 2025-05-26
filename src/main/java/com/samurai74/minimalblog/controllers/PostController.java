@@ -1,5 +1,6 @@
 package com.samurai74.minimalblog.controllers;
 
+import com.samurai74.minimalblog.domain.PostStatus;
 import com.samurai74.minimalblog.domain.UpdatePostRequest;
 import com.samurai74.minimalblog.domain.dtos.CreatePostRequestDto;
 import com.samurai74.minimalblog.domain.dtos.PostDto;
@@ -14,6 +15,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
@@ -69,9 +71,13 @@ public class PostController {
 
     @GetMapping(path = "/{id}")
     public  ResponseEntity<PostDto> getPost(
-            @PathVariable UUID id
+            @PathVariable UUID id,
+            @RequestAttribute UUID userId
     ){
         Post post= postService.getPost(id);
+        if(post.getStatus() == PostStatus.DRAFT && userId == null){
+            throw new AccessDeniedException("You are not authorized.");
+        }
         return ResponseEntity.ok(postMapper.toPostDto(post));
     }
 
