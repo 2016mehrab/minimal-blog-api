@@ -7,6 +7,7 @@ import com.samurai74.minimalblog.security.BlogUserDetails;
 import com.samurai74.minimalblog.security.PasswordResetService;
 import com.samurai74.minimalblog.security.RefreshTokenService;
 import com.samurai74.minimalblog.services.AuthenticationService;
+import io.swagger.v3.oas.annotations.security.SecurityRequirements;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -23,6 +24,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 @Slf4j
 @Tag(name = "Authentication")
+@SecurityRequirements(value={})
 public class AuthController {
     private final AuthenticationService authenticationService;
     private final RefreshTokenService refreshTokenService;
