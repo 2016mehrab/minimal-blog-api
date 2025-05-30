@@ -59,7 +59,7 @@ To run the project locally:
     - The PostgreSQL connection is handled by Docker Compose. You can access the database manually using adminer at  `http://localhost:8888`
 
 4. **Build the Application**:
-   - Execute `mvn clean package` to build the project and generate a JAR file (located in the `target` directory).
+   - Execute `./mvnw clean package` to build the project and generate a JAR file (located in the `target` directory).
    - Run the built JAR with `java -jar target/minimal-blog-0.0.1-SNAPSHOT.jar`.
    - Access Swagger UI at `http://localhost:8080/swagger-ui.html`.
     
