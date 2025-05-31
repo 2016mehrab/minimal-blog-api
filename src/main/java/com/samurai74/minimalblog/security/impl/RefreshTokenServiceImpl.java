@@ -1,5 +1,6 @@
 package com.samurai74.minimalblog.security.impl;
 
+import com.samurai74.minimalblog.constant.Constants;
 import com.samurai74.minimalblog.domain.entities.RefreshToken;
 import com.samurai74.minimalblog.repositories.RefreshTokenRepository;
 import com.samurai74.minimalblog.repositories.UserRepository;
@@ -26,9 +27,10 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
         RefreshToken refreshToken = RefreshToken.builder()
                 .user(user)
                 .token(UUID.randomUUID().toString())
-                .expiryDate(Instant.now().plus(7, ChronoUnit.DAYS))
+                .expiryDate(Instant.now().plus(Constants.REFRESH_TOKEN_EXPIRES_IN, ChronoUnit.DAYS))
                 .revoked(false)
                 .build();
+
         var rt= refreshTokenRepository.save(refreshToken);
         return rt;
     }

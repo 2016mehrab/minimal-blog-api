@@ -12,11 +12,11 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.*;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.Duration;
 import java.util.UUID;
 
 @RestController
@@ -25,6 +25,7 @@ import java.util.UUID;
 @Slf4j
 @Tag(name = "Authentication")
 @SecurityRequirements(value={})
+@CrossOrigin
 public class AuthController {
     private final AuthenticationService authenticationService;
     private final RefreshTokenService refreshTokenService;
@@ -33,16 +34,21 @@ public class AuthController {
     @PostMapping(path = "/login")
     public ResponseEntity<AuthResponse> login(@Valid @RequestBody LoginRequest loginRequest) {
        UserDetails userDetails= authenticationService.authenticate(loginRequest.getEmail(),loginRequest.getPassword());
-       log.warn("username/email "+userDetails.getUsername());
+       log.info("username/email "+userDetails.getUsername());
 
        String tokenValue= authenticationService.generateToken(userDetails);
        UUID userId=((BlogUserDetails) userDetails).getUserId();
        String refreshToken= refreshTokenService.createRefreshToken( userId).getToken();
+
+        ResponseCookie refreshTokenCookie= getRefreshTokenCookie(refreshToken);
+
        var authRes = AuthResponse.builder()
                .accessToken(tokenValue)
-               .refreshToken(refreshToken)
                 .expiresIn(Constants.EXPIRES_IN).build();
-       return ResponseEntity.ok(authRes);
+
+       return ResponseEntity.ok()
+               .header(HttpHeaders.SET_COOKIE, refreshTokenCookie.toString())
+               .body(authRes);
     }
 
     @PostMapping(path = "/refresh-token")
@@ -53,11 +59,14 @@ public class AuthController {
         var userDetails = new BlogUserDetails(refreshToken.getUser())  ;
         var accessToken = authenticationService.generateToken(userDetails);
 
+        var refreshTokenCookie= getRefreshTokenCookie(newRefreshToken);
         var authRes = AuthResponse.builder()
                 .accessToken(accessToken)
-                .refreshToken(newRefreshToken)
                 .expiresIn(Constants.EXPIRES_IN).build();
-        return ResponseEntity.ok(authRes);
+
+        return ResponseEntity.ok()
+                .header(HttpHeaders.SET_COOKIE, refreshTokenCookie.toString())
+                .body(authRes);
     }
 
     @PostMapping(path = "/register")
@@ -68,11 +77,15 @@ public class AuthController {
         String tokenValue= authenticationService.generateToken(userDetails);
         UUID userId=((BlogUserDetails) userDetails).getUserId();
         String refreshToken= refreshTokenService.createRefreshToken( userId).getToken();
+
+        var refreshTokenCookie= getRefreshTokenCookie(refreshToken);
         var authRes = AuthResponse.builder()
                 .accessToken(tokenValue)
-                .refreshToken(refreshToken)
                 .expiresIn(Constants.EXPIRES_IN).build();
-        return ResponseEntity.status(HttpStatus.CREATED).body(authRes);
+
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .header(HttpHeaders.SET_COOKIE, refreshTokenCookie.toString())
+                .body(authRes);
     }
 
     @PostMapping(path = "/forgot-password")
@@ -86,5 +99,17 @@ public class AuthController {
     public ResponseEntity<Void> resetPassword(@Valid @RequestBody PasswordResetConfirmRequest req ) {
         passwordResetService.resetPassword(req.getToken(), req.getNewPassword());
         return ResponseEntity.ok().build();
+    }
+
+    private ResponseCookie getRefreshTokenCookie(String refreshToken) {
+        return ResponseCookie.from("refreshToken", refreshToken)
+                .httpOnly(true)
+                // sent only over https
+                //  .secure(true)
+                .path("/api/v1/auth/refresh-token")
+                .maxAge(Duration.ofDays(Constants.REFRESH_TOKEN_EXPIRES_IN).getSeconds())
+                // for csrf protection, only sent from same origin
+                // .sameSite("Strict")
+                .build();
     }
 }
