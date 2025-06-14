@@ -7,6 +7,8 @@ import com.samurai74.minimalblog.repositories.UserRepository;
 import com.samurai74.minimalblog.security.RefreshTokenService;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -16,6 +18,7 @@ import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class RefreshTokenServiceImpl implements RefreshTokenService {
     private final RefreshTokenRepository refreshTokenRepository;
     private final UserRepository userRepository;
@@ -59,6 +62,15 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
        var rt = refreshTokenRepository.findByToken(refreshToken).orElseThrow(()->new EntityNotFoundException("Token does not exist."));
        rt.setRevoked(true);
        refreshTokenRepository.save(rt);
+
+    }
+
+    @Scheduled(fixedRate = 60_000)
+    public void cleanUpRevokedAndExpiredTokens(){
+        log.info("Starting token cleanup job...");
+        Instant now = Instant.now();
+        int deleteCount = refreshTokenRepository.clearRevokedAndExpiredTokens(now);
+        log.info("Finished token cleanup job. Deleted {} tokens", deleteCount);
 
     }
 
