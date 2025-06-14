@@ -10,4 +10,5 @@ public interface RefreshTokenService {
     RefreshToken createRefreshToken(UUID userId);
     RefreshToken rotateToken(RefreshToken refreshToken);
     RefreshToken getRefreshToken(String token);
+    void revokeRefreshToken(String refreshToken);
 }

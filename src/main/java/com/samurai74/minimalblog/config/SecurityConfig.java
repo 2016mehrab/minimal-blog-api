@@ -4,6 +4,7 @@ import com.samurai74.minimalblog.domain.Role;
 import com.samurai74.minimalblog.domain.entities.User;
 import com.samurai74.minimalblog.repositories.UserRepository;
 import com.samurai74.minimalblog.security.BlogUserDetailsService;
+import com.samurai74.minimalblog.security.CookieLogFilter;
 import com.samurai74.minimalblog.security.EmailPasswordAuthenticationProvider;
 import com.samurai74.minimalblog.security.JwtAuthenticationFilter;
 import com.samurai74.minimalblog.services.AuthenticationService;
@@ -19,6 +20,10 @@ import org.springframework.security.crypto.factory.PasswordEncoderFactories;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+
+import java.util.Arrays;
 
 @Configuration
 public class SecurityConfig {
@@ -26,7 +31,6 @@ public class SecurityConfig {
     public JwtAuthenticationFilter jwtAuthFilter(AuthenticationService authenticationService) {
         return new JwtAuthenticationFilter(authenticationService);
     }
-
     @Bean
     public UserDetailsService userDetailsService(UserRepository userRepository) {
        BlogUserDetailsService blogUserDetailsService = new BlogUserDetailsService(userRepository);
@@ -45,8 +49,21 @@ public class SecurityConfig {
     }
 
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http, JwtAuthenticationFilter jwtAuthenticationFilter, EmailPasswordAuthenticationProvider emailPasswordAuthenticationProvider) throws Exception {
+    UrlBasedCorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration corsConfiguration = new CorsConfiguration();
+        corsConfiguration.addAllowedOrigin("http://localhost:5173");
+        corsConfiguration.addAllowedHeader("*");
+        corsConfiguration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+        corsConfiguration.setAllowCredentials(true);
+        UrlBasedCorsConfigurationSource src = new UrlBasedCorsConfigurationSource();
+        src.registerCorsConfiguration("/**", corsConfiguration);
+        return src;
+    }
+
+    @Bean
+    public SecurityFilterChain securityFilterChain(HttpSecurity http, JwtAuthenticationFilter jwtAuthenticationFilter, EmailPasswordAuthenticationProvider emailPasswordAuthenticationProvider, CookieLogFilter  cookieLogFilter) throws Exception {
         http.authenticationProvider(emailPasswordAuthenticationProvider);
+        http.cors((crs)-> crs.configurationSource(corsConfigurationSource()));
         http.authorizeHttpRequests(auth->
                 auth
                         // first match wins
@@ -65,6 +82,7 @@ public class SecurityConfig {
                 )
                 .csrf(csrf->csrf.disable())
                 .sessionManagement(s->s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+//                .addFilterBefore(cookieLogFilter, JwtAuthenticationFilter.class)
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
         ;
         return http.build();

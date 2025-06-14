@@ -9,6 +9,8 @@ import com.samurai74.minimalblog.security.RefreshTokenService;
 import com.samurai74.minimalblog.services.AuthenticationService;
 import io.swagger.v3.oas.annotations.security.SecurityRequirements;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -25,7 +27,6 @@ import java.util.UUID;
 @Slf4j
 @Tag(name = "Authentication")
 @SecurityRequirements(value={})
-@CrossOrigin
 public class AuthController {
     private final AuthenticationService authenticationService;
     private final RefreshTokenService refreshTokenService;
@@ -51,12 +52,31 @@ public class AuthController {
                .body(authRes);
     }
 
-    @PostMapping(path = "/refresh-token")
-    public ResponseEntity<AuthResponse> getRefreshToken(@RequestBody RefreshRequest refreshRequest) {
-        RefreshToken refreshToken = refreshTokenService.getRefreshToken(refreshRequest.getRefreshToken());
+    @PostMapping("/logout")
+    public ResponseEntity<?> logout(
+                                    @CookieValue(name = "refreshToken", required = false) String refreshToken) {
+        if (refreshToken != null) {
+            refreshTokenService.revokeRefreshToken(refreshToken);
+        }
+        // Clear cookie
+        ResponseCookie clearedCookie = ResponseCookie.from("refreshToken", "")
+                .httpOnly(true)
+                .path("/api/v1/auth/refresh-token")
+                // deletes the cookie
+                .maxAge(0)
+                .build();
 
-        var newRefreshToken =  authenticationService.getRefreshToken(refreshToken).getToken();
-        var userDetails = new BlogUserDetails(refreshToken.getUser())  ;
+        return ResponseEntity.noContent()
+                .header(HttpHeaders.SET_COOKIE, clearedCookie.toString())
+                .build();
+    }
+
+    @PostMapping(path = "/refresh-token")
+    public ResponseEntity<AuthResponse> getRefreshToken(@CookieValue(name = "refreshToken", required = true) String refreshToken) {
+        RefreshToken rf = refreshTokenService.getRefreshToken(refreshToken);
+
+        var newRefreshToken =  authenticationService.getRefreshToken(rf).getToken();
+        var userDetails = new BlogUserDetails(rf.getUser())  ;
         var accessToken = authenticationService.generateToken(userDetails);
 
         var refreshTokenCookie= getRefreshTokenCookie(newRefreshToken);
@@ -101,15 +121,17 @@ public class AuthController {
         return ResponseEntity.ok().build();
     }
 
+
     private ResponseCookie getRefreshTokenCookie(String refreshToken) {
         return ResponseCookie.from("refreshToken", refreshToken)
                 .httpOnly(true)
                 // sent only over https
-                //  .secure(true)
-                .path("/api/v1/auth/refresh-token")
+                  .secure(false)
+                .domain("localhost")
+                .path("/")
                 .maxAge(Duration.ofDays(Constants.REFRESH_TOKEN_EXPIRES_IN).getSeconds())
                 // for csrf protection, only sent from same origin
-                // .sameSite("Strict")
+                 .sameSite("Lax")
                 .build();
     }
 }

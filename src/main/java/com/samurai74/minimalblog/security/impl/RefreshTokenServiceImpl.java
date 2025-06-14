@@ -52,4 +52,14 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
         var rt= refreshTokenRepository.findByToken(token).orElseThrow(()->new EntityNotFoundException("Token does not exist."));
         return rt;
     }
+
+    @Override
+    @Transactional
+    public void revokeRefreshToken(String refreshToken) {
+       var rt = refreshTokenRepository.findByToken(refreshToken).orElseThrow(()->new EntityNotFoundException("Token does not exist."));
+       rt.setRevoked(true);
+       refreshTokenRepository.save(rt);
+
+    }
+
 }
