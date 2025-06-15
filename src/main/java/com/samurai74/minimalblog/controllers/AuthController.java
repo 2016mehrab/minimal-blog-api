@@ -13,6 +13,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.*;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
@@ -55,8 +56,8 @@ public class AuthController {
     public ResponseEntity<?> logout(
                                     @CookieValue(name = "refreshToken", required = false) String refreshToken) {
         log.info("logout with refresh-token: {}", refreshToken);
-        if (refreshToken != null) {
-            refreshTokenService.revokeRefreshToken(refreshToken);
+        if (refreshToken == null) {
+            throw new BadCredentialsException("Missing refresh token");
         }
         // Clear cookie
         ResponseCookie clearedCookie = ResponseCookie.from("refreshToken", "")
@@ -78,7 +79,9 @@ public class AuthController {
     }
 
     @PostMapping(path = "/refresh-token")
-    public ResponseEntity<AuthResponse> getRefreshToken(@CookieValue(name = "refreshToken", required = true) String refreshToken) {
+    public ResponseEntity<AuthResponse> getRefreshToken(@CookieValue(name = "refreshToken", required = false) String refreshToken) {
+        if(refreshToken == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+
         RefreshToken rf = refreshTokenService.getRefreshToken(refreshToken);
 
         var newRefreshToken =  authenticationService.getRefreshToken(rf);
