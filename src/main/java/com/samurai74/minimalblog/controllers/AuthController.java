@@ -9,8 +9,6 @@ import com.samurai74.minimalblog.security.RefreshTokenService;
 import com.samurai74.minimalblog.services.AuthenticationService;
 import io.swagger.v3.oas.annotations.security.SecurityRequirements;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.servlet.http.Cookie;
-import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -19,6 +17,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.Duration;
+import java.time.Instant;
 import java.util.UUID;
 
 @RestController
@@ -39,7 +38,7 @@ public class AuthController {
 
        String tokenValue= authenticationService.generateToken(userDetails);
        UUID userId=((BlogUserDetails) userDetails).getUserId();
-       String refreshToken= refreshTokenService.createRefreshToken( userId).getToken();
+       RefreshToken refreshToken= refreshTokenService.createRefreshToken( userId);
 
         ResponseCookie refreshTokenCookie= getRefreshTokenCookie(refreshToken);
 
@@ -55,15 +54,22 @@ public class AuthController {
     @PostMapping("/logout")
     public ResponseEntity<?> logout(
                                     @CookieValue(name = "refreshToken", required = false) String refreshToken) {
+        log.info("logout with refresh-token: {}", refreshToken);
         if (refreshToken != null) {
             refreshTokenService.revokeRefreshToken(refreshToken);
         }
         // Clear cookie
         ResponseCookie clearedCookie = ResponseCookie.from("refreshToken", "")
+
                 .httpOnly(true)
-                .path("/api/v1/auth/refresh-token")
-                // deletes the cookie
+                // sent only over https
+                .secure(false)
+                .domain("localhost")
+                .path("/")
+//                .maxAge(Duration.ofDays(Constants.REFRESH_TOKEN_EXPIRES_IN).getSeconds())
                 .maxAge(0)
+                // for csrf protection, only sent from same origin
+                .sameSite("Lax")
                 .build();
 
         return ResponseEntity.noContent()
@@ -75,7 +81,7 @@ public class AuthController {
     public ResponseEntity<AuthResponse> getRefreshToken(@CookieValue(name = "refreshToken", required = true) String refreshToken) {
         RefreshToken rf = refreshTokenService.getRefreshToken(refreshToken);
 
-        var newRefreshToken =  authenticationService.getRefreshToken(rf).getToken();
+        var newRefreshToken =  authenticationService.getRefreshToken(rf);
         var userDetails = new BlogUserDetails(rf.getUser())  ;
         var accessToken = authenticationService.generateToken(userDetails);
 
@@ -96,7 +102,7 @@ public class AuthController {
 
         String tokenValue= authenticationService.generateToken(userDetails);
         UUID userId=((BlogUserDetails) userDetails).getUserId();
-        String refreshToken= refreshTokenService.createRefreshToken( userId).getToken();
+        RefreshToken refreshToken= refreshTokenService.createRefreshToken( userId);
 
         var refreshTokenCookie= getRefreshTokenCookie(refreshToken);
         var authRes = AuthResponse.builder()
@@ -122,14 +128,16 @@ public class AuthController {
     }
 
 
-    private ResponseCookie getRefreshTokenCookie(String refreshToken) {
-        return ResponseCookie.from("refreshToken", refreshToken)
+    private ResponseCookie getRefreshTokenCookie(RefreshToken refreshToken) {
+        Duration maxAgeDuration= Duration.between(Instant.now() , refreshToken.getExpiryDate());
+
+        return ResponseCookie.from("refreshToken", refreshToken.getToken())
                 .httpOnly(true)
                 // sent only over https
                   .secure(false)
                 .domain("localhost")
                 .path("/")
-                .maxAge(Duration.ofDays(Constants.REFRESH_TOKEN_EXPIRES_IN).getSeconds())
+                .maxAge(maxAgeDuration.toSeconds())
                 // for csrf protection, only sent from same origin
                  .sameSite("Lax")
                 .build();
