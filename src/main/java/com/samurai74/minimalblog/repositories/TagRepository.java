@@ -15,4 +15,5 @@ public interface TagRepository extends JpaRepository<Tag, UUID> {
     List<Tag> findAllWithPostCount();
     // basically SELECT * FROM tag WHERE name IN ('java', 'spring', 'docker');
     List<Tag> findByNameInIgnoreCase(Set<String> names);
+    List<Tag> findByNameIgnoreCase(String name);
 }

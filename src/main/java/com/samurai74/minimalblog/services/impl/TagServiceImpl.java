@@ -29,9 +29,8 @@ public class TagServiceImpl implements TagService {
         var existingTagsNames = existingTags.stream().map(Tag::getName).collect(Collectors.toSet());
         List<Tag> newTags = tagNames.stream()
                 // if name doesnt exist
-                .filter(name->!existingTagsNames.contains(name))
-
-                .map(name-> Tag.builder().name(name).posts(new HashSet<>()).build()).toList();
+                .filter(name->!existingTagsNames.contains(name.toLowerCase()))
+                .map(name-> Tag.builder().name(name.toLowerCase()).posts(new HashSet<>()).build()).toList();
         List<Tag> savedTags = new ArrayList<>();
         if(!newTags.isEmpty()) {
             savedTags = tagRepository.saveAll(newTags);
@@ -55,6 +54,25 @@ public class TagServiceImpl implements TagService {
     @Override
     public Tag getTagById(UUID tagId) {
         return tagRepository.findById(tagId).orElseThrow(()->new EntityNotFoundException("No tag with id " + tagId));
+    }
+
+    @Transactional
+    @Override
+    public Tag editTagById(UUID tagId, String name) {
+        Tag existingTag = tagRepository.findById(tagId).orElseThrow(()->new EntityNotFoundException("No tag with id " + tagId));
+
+        var existingTags = tagRepository.findByNameIgnoreCase(name);
+        // edited with the previous name
+        if(!existingTags.isEmpty() && existingTags.getFirst().getId().equals(existingTag.getId())) {
+            return existingTags.getFirst();
+        }
+        // same name as another existing tag
+        else if(!existingTags.isEmpty() && !existingTags.getFirst().getId().equals(existingTag.getId())){
+            throw new IllegalArgumentException("Cannot edit tag with id " + existingTag.getId());
+        }
+
+        existingTag.setName(name.toLowerCase());
+        return tagRepository.save(existingTag);
     }
 
     @Override

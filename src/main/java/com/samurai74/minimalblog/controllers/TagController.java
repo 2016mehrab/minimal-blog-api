@@ -1,13 +1,14 @@
 package com.samurai74.minimalblog.controllers;
 
-import com.samurai74.minimalblog.domain.dtos.CreateTagRequest;
-import com.samurai74.minimalblog.domain.dtos.TagDto;
+import com.samurai74.minimalblog.domain.dtos.*;
 import com.samurai74.minimalblog.domain.entities.Tag;
 import com.samurai74.minimalblog.mappers.TagMapper;
 import com.samurai74.minimalblog.services.TagService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.annotation.Secured;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -29,12 +30,22 @@ public class TagController {
     }
 
     @PostMapping
-    public ResponseEntity<List<TagDto>> createTags(@RequestBody CreateTagRequest request) {
+    @Secured(value = "ROLE_ADMIN")
+    public ResponseEntity<List<TagDto>> createTags(@Valid @RequestBody CreateTagRequest request) {
         log.info("requested new tags: {}", request.getTags());
         var allTags = tagService.createTags(request.getTags());
         return ResponseEntity.ok(tagMapper.toTagResponseList(allTags));
     }
+
+    @PutMapping(path = "/{id}")
+    @Secured("ROLE_ADMIN")
+    public ResponseEntity<TagDto> updateTag(@PathVariable UUID id , @Valid @RequestBody UpdateTagName request) {
+        var updatedTag = tagService.editTagById(id, request.getName());
+        return ResponseEntity.ok(tagMapper.toResponse(updatedTag));
+    }
+
     @DeleteMapping(path = "/{id}")
+    @Secured(value = "ROLE_ADMIN")
     public ResponseEntity<Void>deleteTag(@PathVariable UUID id) {
         tagService.deleteTag(id);
         return ResponseEntity.noContent().build();
