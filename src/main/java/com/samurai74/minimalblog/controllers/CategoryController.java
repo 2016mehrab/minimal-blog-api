@@ -35,6 +35,14 @@ public class CategoryController {
         var savedCategory = categoryService.createCategory(category);
         return ResponseEntity.ok(categoryMapper.toDto(savedCategory));
     }
+
+    @PutMapping(path = "/{id}")
+    @Secured("ROLE_ADMIN")
+    public ResponseEntity<CategoryDto> updateCategory(@PathVariable UUID id ,@Valid @RequestBody CreateCategoryRequest updateCategoryRequest) {
+        var updatedCategory = categoryService.updateCategory(id,updateCategoryRequest.getName());
+        return ResponseEntity.ok(categoryMapper.toDto(updatedCategory));
+    }
+
     @DeleteMapping(path = "/{id}")
     @Secured("ROLE_ADMIN")
     public ResponseEntity<Void> deleteCategory(@PathVariable UUID id) {
