@@ -71,7 +71,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
 
     @Override
     @Transactional
-    public RefreshToken getRefreshToken(RefreshToken refreshToken) {
+    public RefreshToken rotateRefreshToken(RefreshToken refreshToken) {
         return refreshTokenService.rotateToken(refreshToken);
     }
 

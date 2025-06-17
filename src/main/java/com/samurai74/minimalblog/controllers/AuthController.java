@@ -83,8 +83,7 @@ public class AuthController {
         if(refreshToken == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
 
         RefreshToken rf = refreshTokenService.getRefreshToken(refreshToken);
-
-        var newRefreshToken =  authenticationService.getRefreshToken(rf);
+        var newRefreshToken =  authenticationService.rotateRefreshToken(rf);
         var userDetails = new BlogUserDetails(rf.getUser())  ;
         var accessToken = authenticationService.generateToken(userDetails);
 

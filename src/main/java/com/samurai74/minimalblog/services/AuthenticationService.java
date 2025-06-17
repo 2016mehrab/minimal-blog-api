@@ -9,5 +9,5 @@ public interface AuthenticationService {
     String generateToken(UserDetails userDetails);
     UserDetails validateToken(String token);
     UserDetails register(String name, String email, String password );
-    RefreshToken getRefreshToken(RefreshToken refreshToken);
+    RefreshToken rotateRefreshToken(RefreshToken refreshToken);
 }
