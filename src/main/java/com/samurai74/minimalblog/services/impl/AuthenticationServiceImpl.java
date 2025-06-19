@@ -4,6 +4,7 @@ import com.samurai74.minimalblog.domain.Role;
 import com.samurai74.minimalblog.domain.entities.RefreshToken;
 import com.samurai74.minimalblog.domain.entities.User;
 import com.samurai74.minimalblog.repositories.UserRepository;
+import com.samurai74.minimalblog.security.BlogUserDetails;
 import com.samurai74.minimalblog.security.RefreshTokenService;
 import com.samurai74.minimalblog.services.AuthenticationService;
 import io.jsonwebtoken.Claims;
@@ -79,6 +80,8 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     public String generateToken(UserDetails userDetails) {
         Map<String, Object> claims = new HashMap<>();
         claims.put("sub", userDetails.getUsername());
+        claims.put("userId",((BlogUserDetails)userDetails).getUserId());
+        claims.put("name",((BlogUserDetails)userDetails).getFullName());
         claims.put("role", userDetails.getAuthorities()
                         .stream()
                         .map(GrantedAuthority::getAuthority)

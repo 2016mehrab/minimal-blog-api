@@ -13,6 +13,7 @@ import com.samurai74.minimalblog.services.PostService;
 import com.samurai74.minimalblog.services.TagService;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -67,12 +68,19 @@ public class PostServiceImpl implements PostService {
 
     @Override
     @Transactional
-    public Post updatePost(UUID postId, UpdatePostRequest updatePostRequest) {
+    public Post updatePost(UUID userId,UUID postId, UpdatePostRequest updatePostRequest) {
         var existingPost = postRepository.findById(postId). orElseThrow(()->new EntityNotFoundException("Post not found"));
+
+        var postAuthorId = existingPost.getAuthor().getId();
+        if(!postAuthorId.equals(userId)) {
+            throw new AccessDeniedException("You are not allowed to edit this post");
+        }
+
         existingPost.setTitle(updatePostRequest.getTitle());
         existingPost.setContent(updatePostRequest.getContent());
         existingPost.setStatus(updatePostRequest.getStatus());
         existingPost.setReadingTime(calculateReadingTime(updatePostRequest.getContent()));
+
         if (!existingPost.getCategory().getId().equals(updatePostRequest.getCategoryId())) {
            var cat= categoryService.getCategoryById(updatePostRequest.getCategoryId()) ;
            existingPost.setCategory(cat);
@@ -95,9 +103,13 @@ public class PostServiceImpl implements PostService {
 
     @Override
     @Transactional
-    public void deletePost(UUID postId) {
-        if(!postRepository.existsById(postId)) {
-            throw new EntityNotFoundException("Post not found");
+    public void deletePost(UUID userId,UUID postId) {
+        Post post = postRepository.findById(postId)
+                .orElseThrow(() -> new EntityNotFoundException("Post with ID " + postId + " not found"));
+        // post exists
+        var postAuthorId = post.getAuthor().getId();
+        if(!postAuthorId.equals(userId)) {
+            throw new AccessDeniedException("You are not allowed to delete this post");
         }
         postRepository.deleteById(postId);
     }

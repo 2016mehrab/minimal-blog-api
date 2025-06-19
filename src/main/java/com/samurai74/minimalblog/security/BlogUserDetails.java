@@ -33,5 +33,8 @@ public class BlogUserDetails implements UserDetails {
     public UUID getUserId() {
        return user.getId();
     }
+    public String getFullName() {
+        return user.getName();
+    }
 
 }

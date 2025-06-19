@@ -12,7 +12,7 @@ public interface PostService {
     List<Post> getAllPosts(UUID categoryId, UUID tagId);
     List<Post>getDraftPosts(User author);
     Post createPost(User user, CreatePostRequest createPostRequest);
-    Post updatePost(UUID postId, UpdatePostRequest updatePostRequest);
+    Post updatePost(UUID userId,UUID postId, UpdatePostRequest updatePostRequest);
     Post getPost(UUID postId);
-    void deletePost(UUID postId);
+    void deletePost(UUID userId,UUID postId);
 }
