@@ -22,7 +22,7 @@ public class CreatePostRequestDto {
     @Size(min = 2 , max = 200, message = "Title must be between {min} and {max} characters")
     private String title;
     @NotBlank(message = "Content is required")
-    @Size(min = 10 , max = 5000, message = "Content must be between {min} and {max} characters")
+    @Size(min = 10 , max = 200000, message = "Content must be between {min} and {max} characters")
     private String content;
     @NotNull(message = "Category ID is required")
     private UUID categoryId;
