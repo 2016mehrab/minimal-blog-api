@@ -1,5 +1,6 @@
 package com.samurai74.minimalblog.services.impl;
 
+import com.samurai74.minimalblog.domain.PostStatus;
 import com.samurai74.minimalblog.domain.entities.Tag;
 import com.samurai74.minimalblog.repositories.TagRepository;
 import com.samurai74.minimalblog.services.TagService;
@@ -42,12 +43,15 @@ public class TagServiceImpl implements TagService {
     @Transactional
     @Override
     public void deleteTag(UUID tagId) {
-        tagRepository.findById(tagId).ifPresent(tag -> {
-            if(!tag.getPosts().isEmpty()) {
-                throw new IllegalStateException("Cannot delete tag with posts");
-            }
-            tagRepository.deleteById(tagId);
+        // fetch all post
+        // delete if no published posts
+        var tag = tagRepository.findById(tagId).orElseThrow(()->new EntityNotFoundException("Tag does not exist"));
+        tag.getPosts().stream().forEach(post -> {
+            if(!post.getStatus().equals(PostStatus.DRAFT)) throw new IllegalStateException("Cannot delete tag '" + tag.getName()+ "' as it is associated with published or pending posts. " +
+                    "Please unpublish/reject these posts or remove the tag from them before deleting the tag.");
         });
+        // all remaining posts are drafts so tag can be deleted
+        tagRepository.deleteById(tagId);
     }
 
     @Transactional(readOnly = true)

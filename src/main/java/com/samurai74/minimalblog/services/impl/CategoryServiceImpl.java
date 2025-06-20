@@ -1,7 +1,9 @@
 package com.samurai74.minimalblog.services.impl;
 
+import com.samurai74.minimalblog.domain.PostStatus;
 import com.samurai74.minimalblog.domain.entities.Category;
 import com.samurai74.minimalblog.repositories.CategoryRepository;
+import com.samurai74.minimalblog.repositories.PostRepository;
 import com.samurai74.minimalblog.services.CategoryService;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
@@ -16,6 +18,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class CategoryServiceImpl implements CategoryService {
     private final CategoryRepository categoryRepository;
+    private final PostRepository postRepository;
 
 
     @Override
@@ -36,13 +39,18 @@ public class CategoryServiceImpl implements CategoryService {
     @Override
     @Transactional
     public void deleteCategory(UUID categoryId) {
-         Optional<Category>categoryOpt =categoryRepository.findById(categoryId);
-         if (categoryOpt.isPresent()) {
-             if (!categoryOpt.get().getPosts().isEmpty()) {
-                throw new IllegalStateException("Category has posts associated with it");
+
+        var category  =categoryRepository.findById(categoryId).orElseThrow(()->new EntityNotFoundException("category with id " + categoryId + " not found"));
+
+             if (!category.getPosts().isEmpty()) {
+                 var uncategorized = categoryRepository.findByNameIgnoreCase("uncategorized").orElseThrow(()->new IllegalStateException("first create an 'uncategorized' category" ));
+                  postRepository.findAllByCategory_Id(categoryId).stream().peek((post) -> {
+                     if (!post.getStatus().equals(PostStatus.DRAFT))
+                         throw new IllegalStateException("Cannot delete category '" + category.getName() + "' as it is associated with published or pending posts. Please unpublish/reject those posts or remove the category from them before deleting the category.");
+                 }).peek(post-> post.setCategory(uncategorized)).toList();
              }
+             category.setPosts(null);
              categoryRepository.deleteById(categoryId);
-         }
     }
 
     @Transactional(readOnly = true)
