@@ -29,7 +29,6 @@ public class CategoryController {
         return ResponseEntity.ok(categories);
     }
     @PostMapping
-    @Secured("ROLE_ADMIN")
     public ResponseEntity<CategoryDto> createCategory(@Valid @RequestBody CreateCategoryRequest createCategoryRequest) {
         var category = categoryMapper.toEntity(createCategoryRequest);
         var savedCategory = categoryService.createCategory(category);
@@ -37,14 +36,12 @@ public class CategoryController {
     }
 
     @PutMapping(path = "/{id}")
-    @Secured("ROLE_ADMIN")
     public ResponseEntity<CategoryDto> updateCategory(@PathVariable UUID id ,@Valid @RequestBody CreateCategoryRequest updateCategoryRequest) {
         var updatedCategory = categoryService.updateCategory(id,updateCategoryRequest.getName());
         return ResponseEntity.ok(categoryMapper.toDto(updatedCategory));
     }
 
     @DeleteMapping(path = "/{id}")
-    @Secured("ROLE_ADMIN")
     public ResponseEntity<Void> deleteCategory(@PathVariable UUID id) {
         categoryService.deleteCategory(id);
         return ResponseEntity.status(HttpStatus.NO_CONTENT).build();

@@ -30,7 +30,6 @@ public class TagController {
     }
 
     @PostMapping
-    @Secured(value = "ROLE_ADMIN")
     public ResponseEntity<List<TagDto>> createTags(@Valid @RequestBody CreateTagRequest request) {
         log.info("requested new tags: {}", request.getTags());
         var allTags = tagService.createTags(request.getTags());
@@ -38,14 +37,12 @@ public class TagController {
     }
 
     @PutMapping(path = "/{id}")
-    @Secured("ROLE_ADMIN")
     public ResponseEntity<TagDto> updateTag(@PathVariable UUID id , @Valid @RequestBody UpdateTagName request) {
         var updatedTag = tagService.editTagById(id, request.getName());
         return ResponseEntity.ok(tagMapper.toResponse(updatedTag));
     }
 
     @DeleteMapping(path = "/{id}")
-    @Secured(value = "ROLE_ADMIN")
     public ResponseEntity<Void>deleteTag(@PathVariable UUID id) {
         tagService.deleteTag(id);
         return ResponseEntity.noContent().build();
