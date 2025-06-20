@@ -1,6 +1,7 @@
 package com.samurai74.minimalblog.controllers;
 
 import com.samurai74.minimalblog.constant.Constants;
+import com.samurai74.minimalblog.domain.Role;
 import com.samurai74.minimalblog.domain.dtos.*;
 import com.samurai74.minimalblog.domain.entities.RefreshToken;
 import com.samurai74.minimalblog.security.BlogUserDetails;
@@ -13,12 +14,14 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.*;
+import org.springframework.security.access.annotation.Secured;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.util.Optional;
 import java.util.UUID;
 
 @RestController
@@ -99,7 +102,28 @@ public class AuthController {
 
     @PostMapping(path = "/register")
     public ResponseEntity<AuthResponse> register(@Valid @RequestBody RegisterRequest registerRequest) {
-        UserDetails userDetails= authenticationService.register(registerRequest.getName(), registerRequest.getEmail(), registerRequest.getPassword());
+        UserDetails userDetails= authenticationService.register(registerRequest.getName(), registerRequest.getEmail(), registerRequest.getPassword(), Optional.of(Role.USER));
+
+
+        String tokenValue= authenticationService.generateToken(userDetails);
+        UUID userId=((BlogUserDetails) userDetails).getUserId();
+        RefreshToken refreshToken= refreshTokenService.createRefreshToken( userId);
+
+        var refreshTokenCookie= getRefreshTokenCookie(refreshToken);
+        var authRes = AuthResponse.builder()
+                .accessToken(tokenValue)
+                .expiresIn(Constants.EXPIRES_IN).build();
+
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .header(HttpHeaders.SET_COOKIE, refreshTokenCookie.toString())
+                .body(authRes);
+    }
+
+    @PostMapping(path = "/admin/register-editor")
+    @Secured("ROLE_ADMIN")
+    public ResponseEntity<AuthResponse> registerEditor(@Valid @RequestBody RegisterRequest registerRequest) {
+
+        UserDetails userDetails= authenticationService.register(registerRequest.getName(), registerRequest.getEmail(), registerRequest.getPassword(),Optional.of(Role.EDITOR));
 
 
         String tokenValue= authenticationService.generateToken(userDetails);
@@ -144,4 +168,5 @@ public class AuthController {
                  .sameSite("Lax")
                 .build();
     }
+
 }

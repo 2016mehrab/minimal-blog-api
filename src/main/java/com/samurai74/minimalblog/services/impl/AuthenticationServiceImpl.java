@@ -30,6 +30,7 @@ import java.security.Key;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -55,16 +56,17 @@ public class AuthenticationServiceImpl implements AuthenticationService {
 
     @Override
     @Transactional
-    public UserDetails register(String name, String email, String password) throws  IllegalArgumentException {
+    public UserDetails register(String name, String email, String password, Optional<Role > role) throws  IllegalArgumentException {
         // if already a user
         if(userRepository.findByEmail(email).isPresent()) {
             throw new IllegalArgumentException("User with email " + email + " already exists");
         }
+        var userRole= role.orElse(Role.USER);
         var transientUser =  User.builder()
                 .name(name)
                 .password(passwordEncoder.encode(password))
                 .email(email)
-                .role(Role.USER)
+                .role(userRole)
                 .build();
         userRepository.save(transientUser);
         return userDetailsService.loadUserByUsername(transientUser.getEmail());

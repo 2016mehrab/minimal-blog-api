@@ -102,9 +102,16 @@ public class PostServiceImpl implements PostService {
     @Override
     @Transactional
     public Post createPost(User user, CreatePostRequest createPostRequest) {
+        PostStatus status = createPostRequest.getStatus();
+        if (status != PostStatus.DRAFT && status != PostStatus.PENDING) {
+            throw new AccessDeniedException("Posts can only be created as DRAFT or PENDING.");
+        }
         var newPost = Post.builder().author(user)
                 .title(createPostRequest.getTitle())
                 .content(createPostRequest.getContent())
+                // could be draft/ published
+                // published should not be allowed
+                // pending allowed
                 .status(createPostRequest.getStatus())
                 .category(categoryService.getCategoryById(createPostRequest.getCategoryId()))
                 .readingTime(calculateReadingTime(createPostRequest.getContent()))

@@ -27,7 +27,7 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import java.util.Arrays;
 
 @Configuration
-@EnableMethodSecurity(securedEnabled = true)
+@EnableMethodSecurity(securedEnabled = true,prePostEnabled = true)
 public class SecurityConfig {
     @Bean
     public JwtAuthenticationFilter jwtAuthFilter(AuthenticationService authenticationService) {
