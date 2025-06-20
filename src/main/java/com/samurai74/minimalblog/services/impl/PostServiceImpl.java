@@ -13,11 +13,17 @@ import com.samurai74.minimalblog.services.PostService;
 import com.samurai74.minimalblog.services.TagService;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.mail.SimpleMailMessage;
+import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -27,6 +33,9 @@ public class PostServiceImpl implements PostService {
     private final PostRepository postRepository;
     private final CategoryService categoryService;
     private final TagService tagService;
+    private final JavaMailSender javaMailSender;
+    @Value("${email.service.from.email}")
+    public String EMAIL_SENDER ;
 
     @Override
     @Transactional(readOnly = true)
@@ -45,6 +54,44 @@ public class PostServiceImpl implements PostService {
             return postRepository.findAllByStatusAndTagsContaining(PostStatus.PUBLISHED, tag);
         }
         return postRepository.findAllByStatus(PostStatus.PUBLISHED);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<Post> getPosts(Optional<UUID> categoryId, Optional<UUID> tagId, Pageable pageable) {
+        // both present
+        if(categoryId.isPresent()  && tagId.isPresent()) {
+            return postRepository.findByCategoryIdAndTags_id(categoryId.get(),tagId.get(), pageable);
+        }
+        // no tags
+        else if(categoryId.isPresent()) {
+        return postRepository.findByCategoryId(categoryId.get(), pageable);
+        }
+        // only tags present
+        else if(tagId.isPresent()) {
+            return postRepository.findByTags_id(tagId.get(), pageable);
+
+        }
+        return  postRepository.findAll(pageable);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<Post> getPendingPosts(Optional<UUID> categoryId, Optional<UUID> tagId, Pageable pageable) {
+        // both present
+        if(categoryId.isPresent()  && tagId.isPresent()) {
+            return postRepository.findByCategoryIdAndTags_idAndStatus(categoryId.get(),tagId.get(), PostStatus.PENDING,pageable );
+        }
+        // no tags
+        else if(categoryId.isPresent()) {
+            return postRepository.findByCategoryIdAndStatus(categoryId.get(), PostStatus.PENDING,pageable);
+        }
+        // only tags present
+        else if(tagId.isPresent()) {
+            return postRepository.findByTags_idAndStatus(tagId.get(), PostStatus.PENDING,pageable);
+
+        }
+        return  postRepository.findByStatus(PostStatus.PENDING,pageable);
     }
 
     @Override
@@ -112,6 +159,54 @@ public class PostServiceImpl implements PostService {
             throw new AccessDeniedException("You are not allowed to delete this post");
         }
         postRepository.deleteById(postId);
+    }
+
+    @Override
+    @Transactional
+    public void approvePost(UUID postId) {
+        Post post = postRepository.findById(postId)
+                .orElseThrow(() -> new EntityNotFoundException("Post with ID " + postId + " not found"));
+        if(!post.getStatus().equals(PostStatus.PENDING)) {
+            throw new IllegalArgumentException("Post status must be PENDING");
+        }
+        post.setStatus(PostStatus.PUBLISHED);
+        postRepository.save(post);
+        // implement email send logic
+        StringBuilder sb = new StringBuilder();
+        sb.append("Your post ");
+        sb.append(post.getTitle());
+        sb.append(" has been approved and published successfully.");
+        sb.append("\n");
+        SimpleMailMessage mailMessage= new SimpleMailMessage();
+        mailMessage.setTo(post.getAuthor().getEmail());
+        mailMessage.setSubject("Post Approval");
+        mailMessage.setFrom(EMAIL_SENDER);
+        mailMessage.setText(sb.toString());
+        javaMailSender.send(mailMessage);
+    }
+
+    @Override
+    @Transactional
+    public void rejectPost(UUID postId) {
+        Post post = postRepository.findById(postId)
+                .orElseThrow(() -> new EntityNotFoundException("Post with ID " + postId + " not found"));
+        if(!post.getStatus().equals(PostStatus.PENDING)) {
+            throw new IllegalArgumentException("Post status must be PENDING");
+        }
+        post.setStatus(PostStatus.DRAFT);
+        postRepository.save(post);
+        // implement email send logic
+        StringBuilder sb = new StringBuilder();
+        sb.append("Your post ");
+        sb.append(post.getTitle());
+        sb.append(" has been rejected and has been moved to drafts.");
+        sb.append("\n");
+        SimpleMailMessage mailMessage= new SimpleMailMessage();
+        mailMessage.setTo(post.getAuthor().getEmail());
+        mailMessage.setSubject("Post Rejection");
+        mailMessage.setFrom(EMAIL_SENDER);
+        mailMessage.setText(sb.toString());
+        javaMailSender.send(mailMessage);
     }
 
     private Integer calculateReadingTime(String content) {

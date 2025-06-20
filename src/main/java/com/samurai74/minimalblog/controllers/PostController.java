@@ -1,5 +1,6 @@
 package com.samurai74.minimalblog.controllers;
 
+import com.samurai74.minimalblog.constant.Constants;
 import com.samurai74.minimalblog.domain.PostStatus;
 import com.samurai74.minimalblog.domain.UpdatePostRequest;
 import com.samurai74.minimalblog.domain.dtos.CreatePostRequestDto;
@@ -13,16 +14,19 @@ import com.samurai74.minimalblog.services.UserService;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
-import org.springframework.security.access.annotation.Secured;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 @RestController
@@ -44,6 +48,25 @@ public class PostController {
        return ResponseEntity.ok(postDtos);
     }
 
+    @GetMapping(path = "/blogs")
+    public ResponseEntity<Page<PostDto>> getPosts(
+            @RequestParam(required = false)UUID categoryId,
+            @RequestParam(required = false)UUID tagId,
+            @RequestParam(defaultValue = "0")int page,
+            @RequestParam(defaultValue = Constants.PAGE_SIZE+"")int size,
+            @RequestParam(defaultValue = "createdAt, desc")String[] sort
+    ){
+        Sort sortOrder =Sort.by(sort[0]);
+        if(sort.length == 2 && sort[1].equalsIgnoreCase("desc")){
+           sortOrder= sortOrder.descending();
+        }else sortOrder=sortOrder.ascending();
+       Pageable pageable = PageRequest.of(page,size,sortOrder) ;
+       Page<Post> postPage=postService.getPosts(Optional.ofNullable(categoryId) ,Optional.ofNullable(tagId),pageable);
+       Page<PostDto> postDtoPage =postPage.map(postMapper::toPostDto);
+       return ResponseEntity.ok(postDtoPage);
+    }
+
+
     @GetMapping("/drafts")
     public ResponseEntity<List<PostDto>> getAllDrafts(
             @RequestAttribute UUID userId
@@ -53,6 +76,7 @@ public class PostController {
         List<PostDto> postDtos = posts.stream().map(postMapper::toPostDto).toList();
         return ResponseEntity.ok(postDtos);
     }
+
     @PostMapping
     public ResponseEntity<PostDto> createPost(@Valid @RequestBody CreatePostRequestDto requestDto ,
                                              @RequestAttribute UUID userId ) {
@@ -61,6 +85,7 @@ public class PostController {
         var savedPost = postService.createPost(loggedInUser, createPostRequest);
         return new ResponseEntity<>(postMapper.toPostDto(savedPost), HttpStatus.CREATED);
     }
+
     @PutMapping(path = "/{id}")
     public  ResponseEntity<PostDto> updatePost(
             @RequestAttribute UUID userId,
@@ -71,6 +96,39 @@ public class PostController {
        UpdatePostRequest updatePostRequest =  postMapper.toUpdatePostRequest(updatePostRequestDto);
        Post updatedPost = postService.updatePost(userId,id, updatePostRequest);
       return ResponseEntity.ok(postMapper.toPostDto(updatedPost));
+    }
+
+    @GetMapping(path = "/pending")
+    public ResponseEntity<Page<PostDto>> getPendingPosts(
+            @RequestParam(required = false)UUID categoryId,
+            @RequestParam(required = false)UUID tagId,
+            @RequestParam(defaultValue = "0")int page,
+            @RequestParam(defaultValue = Constants.PAGE_SIZE+"")int size,
+            @RequestParam(defaultValue = "createdAt, desc")String[] sort
+    ){
+        Sort sortOrder =Sort.by(sort[0]);
+        if(sort.length == 2 && sort[1].equalsIgnoreCase("desc")){
+            sortOrder= sortOrder.descending();
+        }else sortOrder=sortOrder.ascending();
+        Pageable pageable = PageRequest.of(page,size,sortOrder) ;
+        Page<Post> postPage=postService.getPendingPosts(Optional.ofNullable(categoryId) ,Optional.ofNullable(tagId),pageable);
+        Page<PostDto> postDtoPage =postPage.map(postMapper::toPostDto);
+        return ResponseEntity.ok(postDtoPage);
+    }
+
+    @PutMapping(path = "/{id}/approve")
+    public  ResponseEntity<PostDto> approvePost(
+            @PathVariable UUID id
+    ){
+        postService.approvePost(id);
+        return ResponseEntity.ok().build();
+    }
+    @PutMapping(path = "/{id}/reject")
+    public  ResponseEntity<PostDto> rejectPost(
+            @PathVariable UUID id
+    ){
+         postService.rejectPost(id);
+        return ResponseEntity.ok().build();
     }
 
     @GetMapping(path = "/{id}")
