@@ -35,19 +35,7 @@ public class SecurityConfig {
     }
     @Bean
     public UserDetailsService userDetailsService(UserRepository userRepository) {
-       BlogUserDetailsService blogUserDetailsService = new BlogUserDetailsService(userRepository);
-       String email= "admin@gmail.com";
-       userRepository.findByEmail(email).orElseGet(()->{
-           User newUser = User.builder()
-                   .name("Admin")
-                   .email(email)
-                   .role(Role.ADMIN)
-                   .password(passwordEncoder().encode("adminpass"))
-                   .build();
-           return userRepository.save(newUser);
-       });
-
-       return blogUserDetailsService;
+       return new BlogUserDetailsService(userRepository);
     }
 
     @Bean
