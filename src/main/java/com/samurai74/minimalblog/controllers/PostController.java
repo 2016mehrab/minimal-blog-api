@@ -116,6 +116,26 @@ public class PostController {
         return ResponseEntity.ok(postDtoPage);
     }
 
+    @GetMapping(path = "/user-pending")
+    public ResponseEntity<Page<PostDto>> getPendingPosts(
+            @RequestAttribute UUID userId,
+            @RequestParam(required = false)UUID categoryId,
+            @RequestParam(required = false)UUID tagId,
+            @RequestParam(defaultValue = "0")int page,
+            @RequestParam(defaultValue = Constants.PAGE_SIZE+"")int size,
+            @RequestParam(defaultValue = "createdAt, desc")String[] sort
+    ){
+        Sort sortOrder =Sort.by(sort[0]);
+        if(sort.length == 2 && sort[1].equalsIgnoreCase("desc")){
+            sortOrder= sortOrder.descending();
+        }else sortOrder=sortOrder.ascending();
+
+        Pageable pageable = PageRequest.of(page,size,sortOrder) ;
+        Page<Post> postPage=postService.getPendingPostsByUser(userId,Optional.ofNullable(categoryId) ,Optional.ofNullable(tagId),pageable);
+        Page<PostDto> postDtoPage =postPage.map(postMapper::toPostDto);
+        return ResponseEntity.ok(postDtoPage);
+    }
+
     @PutMapping(path = "/{id}/approve")
     public  ResponseEntity<PostDto> approvePost(
             @PathVariable UUID id

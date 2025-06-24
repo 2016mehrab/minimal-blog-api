@@ -3,16 +3,19 @@ package com.samurai74.minimalblog.services.impl;
 import com.samurai74.minimalblog.constant.Constants;
 import com.samurai74.minimalblog.domain.CreatePostRequest;
 import com.samurai74.minimalblog.domain.PostStatus;
+import com.samurai74.minimalblog.domain.Role;
 import com.samurai74.minimalblog.domain.UpdatePostRequest;
 import com.samurai74.minimalblog.domain.entities.Post;
 import com.samurai74.minimalblog.domain.entities.Tag;
 import com.samurai74.minimalblog.domain.entities.User;
 import com.samurai74.minimalblog.repositories.PostRepository;
+import com.samurai74.minimalblog.repositories.UserRepository;
 import com.samurai74.minimalblog.services.CategoryService;
 import com.samurai74.minimalblog.services.PostService;
 import com.samurai74.minimalblog.services.TagService;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -27,6 +30,7 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class PostServiceImpl implements PostService {
@@ -34,6 +38,7 @@ public class PostServiceImpl implements PostService {
     private final CategoryService categoryService;
     private final TagService tagService;
     private final JavaMailSender javaMailSender;
+    private final UserRepository userRepository;
     @Value("${email.service.from.email}")
     public String EMAIL_SENDER ;
 
@@ -95,6 +100,25 @@ public class PostServiceImpl implements PostService {
     }
 
     @Override
+   @Transactional(readOnly = true)
+    public Page<Post> getPendingPostsByUser(UUID userId, Optional<UUID> categoryId, Optional<UUID> tagId, Pageable pageable) {
+        // both present
+        if(categoryId.isPresent()  && tagId.isPresent()) {
+            return postRepository.findByCategoryIdAndTags_idAndStatusAndAuthorId(categoryId.get(),tagId.get(),PostStatus.PENDING,userId,pageable);
+        }
+        // no tags
+        else if(categoryId.isPresent()) {
+            return postRepository.findByCategoryIdAndAuthorIdAndStatus(categoryId.get(),userId,PostStatus.PENDING,pageable);
+        }
+        // only tags present
+        else if(tagId.isPresent()) {
+            return postRepository.findByTags_idAndStatusAndAuthorId(tagId.get(),PostStatus.PENDING,userId,pageable);
+        }
+        return  postRepository.findByAuthorIdAndStatus(userId,PostStatus.PENDING,pageable);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
     public List<Post> getDraftPosts(User author) {
         return postRepository.findAllByAuthorAndStatus(author, PostStatus.DRAFT);
     }
@@ -126,7 +150,10 @@ public class PostServiceImpl implements PostService {
         var existingPost = postRepository.findById(postId). orElseThrow(()->new EntityNotFoundException("Post not found"));
 
         var postAuthorId = existingPost.getAuthor().getId();
-        if(!postAuthorId.equals(userId)) {
+        var user= userRepository.findById(userId);
+        // normal user tried to edit other users post
+        if(!postAuthorId.equals(userId) &&  user.isPresent() && user.get().getRole().equals(Role.USER)) {
+            log.info("authorRole {}", user.get().getRole());
             throw new AccessDeniedException("You are not allowed to edit this post");
         }
 
@@ -165,6 +192,9 @@ public class PostServiceImpl implements PostService {
         if(!postAuthorId.equals(userId)) {
             throw new AccessDeniedException("You are not allowed to delete this post");
         }
+        post.getTags().forEach(tag-> tag.getPosts().remove(post));
+        post.getTags().clear();
+        postRepository.saveAndFlush(post);
         postRepository.deleteById(postId);
     }
 
@@ -180,13 +210,13 @@ public class PostServiceImpl implements PostService {
         postRepository.save(post);
         // implement email send logic
         StringBuilder sb = new StringBuilder();
-        sb.append("Your post ");
+        sb.append("Your post '");
         sb.append(post.getTitle());
-        sb.append(" has been approved and published successfully.");
+        sb.append("' has been approved and published successfully.");
         sb.append("\n");
         SimpleMailMessage mailMessage= new SimpleMailMessage();
         mailMessage.setTo(post.getAuthor().getEmail());
-        mailMessage.setSubject("Post Approval");
+        mailMessage.setSubject("Post Approval from minimal-blog");
         mailMessage.setFrom(EMAIL_SENDER);
         mailMessage.setText(sb.toString());
         javaMailSender.send(mailMessage);

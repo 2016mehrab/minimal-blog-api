@@ -27,6 +27,13 @@ public interface PostRepository extends JpaRepository<Post, UUID> {
     Page<Post> findByCategoryIdAndTags_idAndStatus(UUID categoryId, UUID tagsId, PostStatus status, Pageable pageable);
     Page<Post> findByCategoryIdAndStatus(UUID categoryId, PostStatus status, Pageable pageable);
     Page<Post> findByTags_idAndStatus(UUID tagsId, PostStatus status, Pageable pageable);
+
+    Page<Post> findByCategoryIdAndTags_idAndStatusAndAuthorId(UUID categoryId, UUID tagsId, PostStatus status, UUID authorId, Pageable pageable);
+    Page<Post> findByTags_idAndStatusAndAuthorId(UUID tagsId, PostStatus status, UUID authorId, Pageable pageable);
+    Page<Post> findByCategoryIdAndAuthorIdAndStatus(UUID categoryId, UUID authorId, PostStatus status, Pageable pageable);
+    Page<Post> findByAuthorIdAndStatus(UUID authorId, PostStatus status, Pageable pageable);
+
+
     Page<Post> findByStatus(PostStatus status, Pageable pageable);
     List<Post> findAllByCategory_Id(UUID categoryId);
 }

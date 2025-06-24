@@ -27,6 +27,7 @@ public class DataInitializer implements CommandLineRunner {
     var tags = List.of("react" ,"java", "laravel", "php", "go", "javascript", "horror", "maven","spring boot","python","spring security","fastapi","astro","trash");
     var cats = List.of("uncategorized", "programming", "math", "science", "machine learning","trash");
     for (var tag : tags) {
+        if(!tagRepository.findByNameIgnoreCase(tag).isEmpty()) continue;
         tagRepository.save(Tag.builder().name(tag).build());
     }
       String adminMail = "2016mehrab@gmail.com";
@@ -41,6 +42,9 @@ public class DataInitializer implements CommandLineRunner {
                   return userRepository.save(admin);
               }
               );
-      for(var cat: cats) categoryRepository.save(Category.builder().name(cat).build());
+      for(var cat: cats){
+          if(categoryRepository.findByNameIgnoreCase(cat).isPresent()) continue;
+          categoryRepository.save(Category.builder().name(cat).build());
+      }
     }
 }

@@ -17,6 +17,10 @@ public interface PostService {
     Page<Post> getPosts(Optional<UUID> categoryId, Optional<UUID> tagId , Pageable pageable);
     @PreAuthorize("hasRole('ADMIN') or hasRole('EDITOR')")
     Page<Post> getPendingPosts(Optional<UUID> categoryId, Optional<UUID> tagId , Pageable pageable);
+
+    @PreAuthorize("isAuthenticated()")
+    Page<Post> getPendingPostsByUser(UUID userId,Optional<UUID> categoryId, Optional<UUID> tagId , Pageable pageable);
+
     List<Post>getDraftPosts(User author);
     Post createPost(User user, CreatePostRequest createPostRequest);
     Post updatePost(UUID userId,UUID postId, UpdatePostRequest updatePostRequest);
