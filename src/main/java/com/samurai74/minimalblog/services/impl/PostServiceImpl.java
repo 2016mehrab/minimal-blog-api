@@ -118,8 +118,19 @@ public class PostServiceImpl implements PostService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<Post> getDraftPosts(User author) {
-        return postRepository.findAllByAuthorAndStatus(author, PostStatus.DRAFT);
+    public Page<Post> getDraftedPosts(UUID userId, Optional<UUID> categoryId, Optional<UUID> tagId, Pageable pageable) {
+        if(categoryId.isPresent()  && tagId.isPresent()) {
+            return postRepository.findByCategoryIdAndTags_idAndStatusAndAuthorId(categoryId.get(),tagId.get(),PostStatus.DRAFT, userId ,pageable);
+        }
+        // no tags
+        else if(categoryId.isPresent()) {
+            return postRepository.findByCategoryIdAndAuthorIdAndStatus(categoryId.get(),userId,PostStatus.DRAFT,pageable);
+        }
+        // only tags present
+        else if(tagId.isPresent()) {
+            return postRepository.findByTags_idAndStatusAndAuthorId(tagId.get(),PostStatus.DRAFT,userId,pageable);
+        }
+        return  postRepository.findByAuthorIdAndStatus(userId,PostStatus.DRAFT,pageable);
     }
 
     @Override

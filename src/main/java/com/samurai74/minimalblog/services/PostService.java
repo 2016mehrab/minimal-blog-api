@@ -21,7 +21,9 @@ public interface PostService {
     @PreAuthorize("isAuthenticated()")
     Page<Post> getPendingPostsByUser(UUID userId,Optional<UUID> categoryId, Optional<UUID> tagId , Pageable pageable);
 
-    List<Post>getDraftPosts(User author);
+    @PreAuthorize("isAuthenticated()")
+    Page<Post> getDraftedPosts(UUID userId,Optional<UUID> categoryId, Optional<UUID> tagId , Pageable pageable);
+
     Post createPost(User user, CreatePostRequest createPostRequest);
     Post updatePost(UUID userId,UUID postId, UpdatePostRequest updatePostRequest);
     Post getPost(UUID postId);
