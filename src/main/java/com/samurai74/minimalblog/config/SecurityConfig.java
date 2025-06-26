@@ -58,8 +58,9 @@ public class SecurityConfig {
                 auth
                         // first match wins
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+                        .requestMatchers(HttpMethod.POST,"/api/v1/auth/register-editor").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.POST,"/api/v1/auth/**").permitAll()
-                        .requestMatchers(HttpMethod.GET,"/api/v1/posts/drafts").hasAnyRole("ADMIN", "USER")
+                        .requestMatchers(HttpMethod.GET,"/api/v1/posts/drafts").hasAnyRole("ADMIN", "USER","EDITOR")
                         .requestMatchers(HttpMethod.GET,"/api/v1/posts/**").permitAll()
                         .requestMatchers(HttpMethod.GET,"/api/v1/categories/**").permitAll()
                         .requestMatchers(HttpMethod.GET,"/api/v1/tags/**").permitAll()

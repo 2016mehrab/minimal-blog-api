@@ -15,6 +15,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.*;
 import org.springframework.security.access.annotation.Secured;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
@@ -119,7 +120,7 @@ public class AuthController {
                 .body(authRes);
     }
 
-    @PostMapping(path = "/admin/register-editor")
+    @PostMapping(path = "/register-editor")
     @Secured("ROLE_ADMIN")
     public ResponseEntity<AuthResponse> registerEditor(@Valid @RequestBody RegisterRequest registerRequest) {
 
