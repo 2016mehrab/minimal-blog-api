@@ -13,7 +13,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 public interface PostService {
-    List<Post> getAllPosts(UUID categoryId, UUID tagId);
+    Page<Post> getPublishedPosts(Optional<UUID> categoryId, Optional<UUID> tagId , Pageable pageable);
     Page<Post> getPosts(Optional<UUID> categoryId, Optional<UUID> tagId , Pageable pageable);
     @PreAuthorize("hasRole('ADMIN') or hasRole('EDITOR')")
     Page<Post> getPendingPosts(Optional<UUID> categoryId, Optional<UUID> tagId , Pageable pageable);

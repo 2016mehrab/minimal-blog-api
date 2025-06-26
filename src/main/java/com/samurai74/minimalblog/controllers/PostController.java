@@ -39,13 +39,22 @@ public class PostController {
     private final UserService userService;
 
     @GetMapping
-    public ResponseEntity<List<PostDto>> getAllPosts(
-            @RequestParam(required=false)UUID categoryId,
-            @RequestParam(required=false)UUID tagId
+    public ResponseEntity<Page<PostDto>> getPublishedPosts(
+            @RequestParam(required = false)UUID categoryId,
+            @RequestParam(required = false)UUID tagId,
+            @RequestParam(defaultValue = "0")int page,
+            @RequestParam(defaultValue = Constants.PAGE_SIZE+"")int size,
+            @RequestParam(defaultValue = "createdAt, desc")String[] sort
             ) {
-       var posts =  postService.getAllPosts(categoryId, tagId);
-       List<PostDto> postDtos = posts.stream().map(postMapper::toPostDto).toList();
-       return ResponseEntity.ok(postDtos);
+        Sort sortOrder =Sort.by(sort[0]);
+        if(sort.length == 2 && sort[1].equalsIgnoreCase("desc")){
+            sortOrder= sortOrder.descending();
+        }else sortOrder=sortOrder.ascending();
+        Pageable pageable = PageRequest.of(page,size,sortOrder) ;
+
+       var postPage =  postService.getPublishedPosts(Optional.ofNullable(categoryId) ,Optional.ofNullable(tagId),pageable);
+        Page<PostDto> postDtoPage =postPage.map(postMapper::toPostDto);
+       return ResponseEntity.ok(postDtoPage);
     }
 
     @GetMapping(path = "/blogs")

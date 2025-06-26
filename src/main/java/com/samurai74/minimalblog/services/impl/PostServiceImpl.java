@@ -44,21 +44,20 @@ public class PostServiceImpl implements PostService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<Post> getAllPosts(UUID categoryId, UUID tagId) {
-        if(categoryId!=null && tagId!=null) {
-            var category =categoryService.getCategoryById(categoryId);
-            var tag = tagService.getTagById(tagId);
-            return postRepository.findAllByStatusAndCategoryAndTagsContaining(PostStatus.PUBLISHED, category, tag);
+    public Page<Post> getPublishedPosts(Optional<UUID> categoryId, Optional<UUID> tagId, Pageable pageable) {
+        if(categoryId.isPresent()  && tagId.isPresent()) {
+            return postRepository.findByCategoryIdAndTags_idAndStatus(categoryId.get(),tagId.get(), PostStatus.PUBLISHED,pageable);
         }
-        if (categoryId!=null) {
-            var category =categoryService.getCategoryById(categoryId);
-            return postRepository.findAllByStatusAndCategory(PostStatus.PUBLISHED, category);
+        // no tags
+        else if(categoryId.isPresent()) {
+            return postRepository.findByCategoryIdAndStatus(categoryId.get(), PostStatus.PUBLISHED, pageable);
         }
-        if (tagId!=null) {
-            var tag = tagService.getTagById(tagId);
-            return postRepository.findAllByStatusAndTagsContaining(PostStatus.PUBLISHED, tag);
+        // only tags present
+        else if(tagId.isPresent()) {
+            return postRepository.findByTags_idAndStatus(tagId.get(), PostStatus.PUBLISHED,pageable);
+
         }
-        return postRepository.findAllByStatus(PostStatus.PUBLISHED);
+        return  postRepository.findByStatus(PostStatus.PUBLISHED,pageable);
     }
 
     @Override
@@ -219,7 +218,8 @@ public class PostServiceImpl implements PostService {
         mailMessage.setSubject("Post Approval from minimal-blog");
         mailMessage.setFrom(EMAIL_SENDER);
         mailMessage.setText(sb.toString());
-        javaMailSender.send(mailMessage);
+        //TODO: uncomment
+//        javaMailSender.send(mailMessage);
     }
 
     @Override
@@ -243,7 +243,8 @@ public class PostServiceImpl implements PostService {
         mailMessage.setSubject("Post Rejection");
         mailMessage.setFrom(EMAIL_SENDER);
         mailMessage.setText(sb.toString());
-        javaMailSender.send(mailMessage);
+        //TODO: uncomment
+//        javaMailSender.send(mailMessage);
     }
 
     private Integer calculateReadingTime(String content) {
