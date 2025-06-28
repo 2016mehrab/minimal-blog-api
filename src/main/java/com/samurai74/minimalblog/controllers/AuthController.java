@@ -68,13 +68,16 @@ public class AuthController {
 
                 .httpOnly(true)
                 // sent only over https
-                .secure(false)
-                .domain("localhost")
+//                .secure(false)
+                .secure(true)
+//                .domain("localhost")
                 .path("/")
 //                .maxAge(Duration.ofDays(Constants.REFRESH_TOKEN_EXPIRES_IN).getSeconds())
                 .maxAge(0)
                 // for csrf protection, only sent from same origin
-                .sameSite("Lax")
+//                .sameSite("Lax")
+                .partitioned(true)
+                .sameSite("None")
                 .build();
 
         return ResponseEntity.noContent()
@@ -161,12 +164,15 @@ public class AuthController {
         return ResponseCookie.from("refreshToken", refreshToken.getToken())
                 .httpOnly(true)
                 // sent only over https
-                  .secure(false)
-                .domain("localhost")
+//                  .secure(false)
+                .secure(true)
+//                .domain("localhost")
                 .path("/")
                 .maxAge(maxAgeDuration.toSeconds())
                 // for csrf protection, only sent from same origin
-                 .sameSite("Lax")
+//                 .sameSite("Lax")
+                .sameSite("None")
+                .partitioned(true)
                 .build();
     }
 
