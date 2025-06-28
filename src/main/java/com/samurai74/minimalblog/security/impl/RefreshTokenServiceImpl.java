@@ -65,7 +65,7 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
 
     }
 
-    @Scheduled(fixedRate = 60_000)
+    @Scheduled(fixedRate = 7200_000)
     public void cleanUpRevokedAndExpiredTokens(){
         log.info("Starting token cleanup job...");
         Instant now = Instant.now();
