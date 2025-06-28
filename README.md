@@ -17,7 +17,6 @@ A RESTful API built with Spring Boot and Java, demonstrating core backend develo
 * **Security:** JWT (JJWT), BCrypt
 * **API Tools:** OpenAPI 3 / Swagger UI, MapStruct
 * **Deployment:** Docker, Maven
-
 ## Project Structure
 
 * `controllers`: Defines RESTful endpoints.
@@ -26,6 +25,62 @@ A RESTful API built with Spring Boot and Java, demonstrating core backend develo
 * `repositories`: Manages database operations.
 * `security`: Handles JWT and password reset logic.
 * `config`: Handles configuration for OpenAPI and Spring Security.
+ 
+## Database Schema
+
+The application uses PostgreSQL database schema designed for content management and user authentication. Key entities include:
+
+* **Users**: Manages user profiles and roles.
+* **Posts**: Stores blog content with metadata, linked to authors and categories.
+* **Categories & Tags**: Provide flexible content organization.
+* **Refresh Tokens**: Securely handles user session management.
+
+![Minimal Blog Database Schema](./minimal-blog-schema.png)
+
+## API Endpoints
+
+### Authentication
+```
+POST   /api/v1/auth/register              # User registration
+POST   /api/v1/auth/register-editor       # Editor registration (Admin only)
+POST   /api/v1/auth/login                 # User authentication
+POST   /api/v1/auth/logout                # Secure logout with token cleanup
+POST   /api/v1/auth/refresh-token         # Token refresh rotation
+POST   /api/v1/auth/forgot-password       # Password reset request
+POST   /api/v1/auth/reset-password        # Password reset confirmation
+```
+
+### Posts Management
+```
+GET    /api/v1/posts                      # List published posts (paginated)
+GET    /api/v1/posts/drafts               # List user's draft posts
+POST   /api/v1/posts                      # Create new post
+GET    /api/v1/posts/{id}                 # Get specific post details
+PUT    /api/v1/posts/{id}                 # Update existing post
+DELETE /api/v1/posts/{id}                 # Delete post (soft delete)
+PATCH  /api/v1/posts/{id}/publish         # Publish draft post
+PATCH  /api/v1/posts/{id}/unpublish       # Convert to draft
+```
+
+### Categories Management
+```
+GET    /api/v1/categories                 # List all categories with post counts
+POST   /api/v1/categories                 # Create new category (Admin/Editor)
+GET    /api/v1/categories/{id}            # Get category details
+PUT    /api/v1/categories/{id}            # Update category (Admin/Editor)
+DELETE /api/v1/categories/{id}            # Delete category (Admin only)
+GET    /api/v1/categories/{id}/posts      # Posts by specific category
+```
+
+### Tags Management
+```
+GET    /api/v1/tags                       # List all tags with usage counts
+POST   /api/v1/tags                       # Create new tag
+GET    /api/v1/tags/{id}                  # Get tag details
+PUT    /api/v1/tags/{id}                  # Update tag information
+DELETE /api/v1/tags/{id}                  # Delete tag
+GET    /api/v1/tags/{id}/posts            # Posts associated with tag
+```
 
 ## Getting Started (Local)
 
