@@ -230,7 +230,7 @@ public class PostServiceImpl implements PostService {
         mailMessage.setFrom(EMAIL_SENDER);
         mailMessage.setText(sb.toString());
         //TODO: uncomment
-//        javaMailSender.send(mailMessage);
+        javaMailSender.send(mailMessage);
     }
 
     @Override
@@ -255,7 +255,7 @@ public class PostServiceImpl implements PostService {
         mailMessage.setFrom(EMAIL_SENDER);
         mailMessage.setText(sb.toString());
         //TODO: uncomment
-//        javaMailSender.send(mailMessage);
+        javaMailSender.send(mailMessage);
     }
 
     private Integer calculateReadingTime(String content) {

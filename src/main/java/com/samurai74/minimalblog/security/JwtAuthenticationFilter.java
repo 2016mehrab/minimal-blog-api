@@ -26,6 +26,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 UserDetails userDetails = authenticationService.validateToken(token);
                 // blogUserDetails will be returned as it's the only one that implements UserDetails
                 var authentication = new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
+                log.info("user role: {}", authentication.getAuthorities());
                 SecurityContextHolder.getContext().setAuthentication(authentication);
                 if(userDetails instanceof  BlogUserDetails){
                     request.setAttribute("userId", ((BlogUserDetails) userDetails).getUserId());
