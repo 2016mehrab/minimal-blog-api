@@ -1,71 +1,49 @@
-# Minimal Blog API - README
+# Minimal Blog API
 
-## Overview
+A RESTful API built with Spring Boot and Java, demonstrating core backend development skills. This project provides a secure, role-based content management system for a blog application.
 
-The Minimal Blog is a lightweight, modern blog API developed as a personal project to showcase my skills in back-end development, security, and database management. This project demonstrates proficiency in Spring Boot, RESTful API design, JWT authentication and database modeling.
+## Key Features
 
-## Technologies Used
+* **Authentication & Authorization:** Secure JWT-based authentication with refresh tokens and role-based access control (Admin, Editor, User).
+* **Content Management:** Full CRUD operations for posts, categories, and tags, supporting draft/published workflows.
+* **Email Service:** Implemented for password reset and author notifications for reviewed posts.
+* **API Documentation:** Interactive API documentation available via Swagger UI.
+* **Database Management:** PostgreSQL integration for structured data storage.
 
-- **Backend**: Spring Boot 3.4.5, Java 21
-- **Database**: PostgreSQL, H2 (for testing)
-- **Security**: Spring Security, JWT (using JJWT), Password Encoding
-- **API Documentation**: OpenAPI (Swagger) 2.8.8
-- **Mapping**: MapStruct
-- **Email**: Spring Mail with MailTrap
-- **Build Tool**: Maven
-- **Libraries**: Lombok, Hibernate
-- **Containerization**: Docker, Docker Compose
+## Technologies
 
-## Features
-
-- User authentication and registration with JWT-based security.
-- Password reset functionality via email.
-- CRUD operations for blog posts, categories, and tags.
-- Draft and published post management with role-based access (ADMIN/USER).
-- API endpoints documented with Swagger UI for easy testing.
-- Reading time calculation for posts and post count tracking for categories/tags.
-- Transactional data handling with Hibernate/JPA.
+* **Backend:** Spring Boot 3.4.5, Java 21, Spring Security 6
+* **Database:** PostgreSQL, Hibernate/JPA
+* **Security:** JWT (JJWT), BCrypt
+* **API Tools:** OpenAPI 3 / Swagger UI, MapStruct
+* **Deployment:** Docker, Maven
 
 ## Project Structure
 
-The application follows a clean architecture with:
+* `controllers`: Defines RESTful endpoints.
+* `domain`: Contains DTOs and entities.
+* `services`: Implements business logic.
+* `repositories`: Manages database operations.
+* `security`: Handles JWT and password reset logic.
+* `config`: Handles configuration for OpenAPI and Spring Security.
 
-- `controllers`: RESTful endpoints for authentication, posts, categories, and tags.
-- `domain`: DTOs and entities defining the data model.
-- `services`: Business logic implementation.
-- `repositories`: JPA repositories for database operations.
-- `security`: Custom JWT authentication and password reset services.
-- `config`: Configuration for OpenAPI and Spring Security.
-- `mappers`: MapStruct for entity-DTO mapping.
+## Getting Started (Local)
 
-## Setup Instructions
+1.  **Prerequisites:** Ensure Java 21+, Docker, and Maven are installed.
+2.  **Clone Repository:** `git clone https://github.com/2016mehrab/minimal-blog-api.git && cd minimal-blog-api`
+3.  **Configuration:** Customize `application.properties` in `src/main/resources/` for local application settings. Refer to `application-example.properties` for guidance.
+4.  **Run with Docker Compose:**
+    ```bash
+    docker compose up --build
+    ```
+    * **Access Swagger UI:** `http://localhost:8080/swagger-ui.html`
+    * **Access Adminer (DB GUI):** `http://localhost:8888`
+        * *(Server: `db`, User: `root`, Pass: `secret`, DB: `minimal-blog`)*
 
-To run the project locally:
+## Deployment
 
-1. **Install Prerequisites**:
-    - Ensure Docker, Java 21, and Maven are installed.
+* **Backend Hosting:** Railway.app (Free Tier)
+* **Database Hosting:** Neon (PostgreSQL, Free Tier)
+* **Frontend Hosting:** [Netlify](https://minimal-blog-mehrab.netlify.app/home)
 
-2. **Start Docker Services**:
-    - Navigate to the project directory.
-    - Run `docker compose up --build` to start PostgreSQL and Adminer.
-    - Verify services are running by accessing Adminer at `http://localhost:8888` (default credentials: server `db`, user `root`, password `secret`, database `minimal-blog`).
-
-3. **Configure Environment**:
-   - Copy `application-example.properties` to `application.properties` in the `src/main/resources` directory.
-   - Update `application.properties` with your configuration:
-      - Replace `your_jwt_secret_key_here` with a secure JWT secret key.
-      - Update `your_mailtrap_username` and `your_mailtrap_password` with your MailTrap credentials.
-      - Set `your_verified_email@example.com` to your verified email for sending password reset emails.
-    - The PostgreSQL connection is handled by Docker Compose. You can access the database manually using adminer at  `http://localhost:8888`
-
-4. **Build the Application**:
-   - Execute `./mvnw clean package` to build the project and generate a JAR file (located in the `target` directory).
-   - Run the built JAR with `java -jar target/minimal-blog-0.0.1-SNAPSHOT.jar`.
-   - Access Swagger UI at `http://localhost:8080/swagger-ui.html`.
-    
-## Basic Usage
-
-- Register a new user via `/api/v1/auth/register`.
-- Log in via `/api/v1/auth/login` to obtain a JWT token.
-- Use the token to access protected endpoints (e.g., `/api/v1/posts/drafts`).
-- Reset password via `/api/v1/auth/forgot-password` and `/api/v1/auth/reset-password`.
+*For more information about the frontend, please visit the main [Minimal Blog Frontend repository](https://github.com/2016mehrab/minimal-blog).*
