@@ -8,8 +8,10 @@ import com.samurai74.minimalblog.security.CookieLogFilter;
 import com.samurai74.minimalblog.security.EmailPasswordAuthenticationProvider;
 import com.samurai74.minimalblog.security.JwtAuthenticationFilter;
 import com.samurai74.minimalblog.services.AuthenticationService;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.data.web.config.EnableSpringDataWebSupport;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
@@ -25,10 +27,16 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import java.util.Arrays;
+import java.util.Set;
 
 @Configuration
 @EnableMethodSecurity(securedEnabled = true,prePostEnabled = true)
+@EnableSpringDataWebSupport(pageSerializationMode = EnableSpringDataWebSupport.PageSerializationMode.VIA_DTO)
 public class SecurityConfig {
+
+    @Value("${cors.allowed-origins}")
+    private Set<String> allowedOrigins;
+
     @Bean
     public JwtAuthenticationFilter jwtAuthFilter(AuthenticationService authenticationService) {
         return new JwtAuthenticationFilter(authenticationService);
@@ -41,8 +49,7 @@ public class SecurityConfig {
     @Bean
     UrlBasedCorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration corsConfiguration = new CorsConfiguration();
-        corsConfiguration.addAllowedOrigin("http://localhost:5173" );
-        corsConfiguration.addAllowedOrigin("https://minimal-blog-mehrab.netlify.app");
+        corsConfiguration.setAllowedOrigins(allowedOrigins.stream().toList());
         corsConfiguration.addAllowedHeader("*");
         corsConfiguration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         corsConfiguration.setAllowCredentials(true);

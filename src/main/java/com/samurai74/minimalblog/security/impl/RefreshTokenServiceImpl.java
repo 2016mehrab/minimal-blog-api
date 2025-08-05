@@ -62,10 +62,9 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
        var rt = refreshTokenRepository.findByToken(refreshToken).orElseThrow(()->new EntityNotFoundException("Token does not exist."));
        rt.setRevoked(true);
        refreshTokenRepository.save(rt);
-
     }
 
-    @Scheduled(fixedRate = 7200_000)
+    @Scheduled(fixedRateString = "${revoked_token_cleanup_interval}")
     public void cleanUpRevokedAndExpiredTokens(){
         log.info("Starting token cleanup job...");
         Instant now = Instant.now();
