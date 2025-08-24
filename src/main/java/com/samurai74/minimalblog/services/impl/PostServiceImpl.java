@@ -11,6 +11,7 @@ import com.samurai74.minimalblog.domain.entities.User;
 import com.samurai74.minimalblog.repositories.PostRepository;
 import com.samurai74.minimalblog.repositories.UserRepository;
 import com.samurai74.minimalblog.services.CategoryService;
+import com.samurai74.minimalblog.services.EmailService;
 import com.samurai74.minimalblog.services.PostService;
 import com.samurai74.minimalblog.services.TagService;
 import jakarta.persistence.EntityNotFoundException;
@@ -37,7 +38,7 @@ public class PostServiceImpl implements PostService {
     private final PostRepository postRepository;
     private final CategoryService categoryService;
     private final TagService tagService;
-    private final JavaMailSender javaMailSender;
+    private final EmailService emailService;
     private final UserRepository userRepository;
     @Value("${email.service.from.email}")
     public String EMAIL_SENDER ;
@@ -229,8 +230,7 @@ public class PostServiceImpl implements PostService {
         mailMessage.setSubject("Post Approval from minimal-blog");
         mailMessage.setFrom(EMAIL_SENDER);
         mailMessage.setText(sb.toString());
-        //TODO: uncomment
-        javaMailSender.send(mailMessage);
+        emailService.queueEmail(mailMessage);
     }
 
     @Override
@@ -254,8 +254,7 @@ public class PostServiceImpl implements PostService {
         mailMessage.setSubject("Post Rejection");
         mailMessage.setFrom(EMAIL_SENDER);
         mailMessage.setText(sb.toString());
-        //TODO: uncomment
-        javaMailSender.send(mailMessage);
+        emailService.queueEmail(mailMessage);
     }
 
     private Integer calculateReadingTime(String content) {
