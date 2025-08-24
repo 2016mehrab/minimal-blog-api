@@ -8,14 +8,18 @@ import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.mail.MailException;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 @Service
 @RequiredArgsConstructor
@@ -26,6 +30,7 @@ public class PasswordResetServiceImpl implements PasswordResetService {
     @Value("${email.service.from.email}")
     public String EMAIL_SENDER ;
     private final JavaMailSender mailSender;
+    private final ExecutorService emailExecutor = Executors.newVirtualThreadPerTaskExecutor();
 
 
     @Transactional
@@ -54,7 +59,7 @@ public class PasswordResetServiceImpl implements PasswordResetService {
         sm.setFrom(EMAIL_SENDER);
         sm.setSubject("Password Reset token from Minimal Blog");
         sm.setText(sb.toString());
-        mailSender.send(sm);
+        emailExecutor.submit(()-> sendEmail(sm));
     }
 
     @Transactional
@@ -71,5 +76,22 @@ public class PasswordResetServiceImpl implements PasswordResetService {
         userOpt.get().setResetToken(null);
         userOpt.get().setResetTokenExpiresAt(null);
         userRepository.save(userOpt.get());
+    }
+    protected void sendEmail(SimpleMailMessage email) {
+        log.info("Starting email sending process in a new thread...");
+        try {
+            mailSender.send(email);
+            if (email.getTo() != null) {
+                log.info("Successfully sent email to {}.", email.getTo()[0]);
+            } else {
+                log.info("Successfully sent email.");
+            }
+        } catch (MailException e) {
+            if (email.getTo() != null) {
+                log.error("Failed to send email to {}. Error: {}", email.getTo()[0], e.getMessage());
+            } else {
+                log.error("Failed to send email. Error: {}", e.getMessage());
+            }
+        }
     }
 }
