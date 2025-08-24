@@ -83,7 +83,78 @@ GET    /api/v1/tags/{id}/posts            # Posts associated with tag
 ```
 
 ## Getting Started (Local)
+## Environment Variables
 
+To run the application, you need to configure the following environment variables:
+
+```properties
+spring.application.name=minimal-blog
+
+# Database Configuration (using environment variables)
+spring.datasource.url=${SPRING_DATASOURCE_URL}
+spring.datasource.username=${SPRING_DATASOURCE_USERNAME}
+spring.datasource.password=${SPRING_DATASOURCE_PASSWORD}
+server.port=${SERVER_PORT}
+
+# JPA Configs
+spring.jpa.hibernate.ddl-auto=validate
+spring.jpa.show-sql=false
+spring.jpa.properties.hibernate.format_sql=true
+spring.jpa.database-platform=org.hibernate.dialect.PostgreSQLDialect
+
+# JWT Secret (using environment variable)
+jwt.secret=${JWT_SECRET}
+
+# Logs
+logging.level.root=INFO
+logging.level.com.samurai74=DEBUG
+logging.file.name=logs/minimal-blog.log
+
+# Email Service (using environment variables and App Password for Gmail)
+spring.mail.host=smtp.gmail.com
+spring.mail.port=587
+spring.mail.username=${MAIL_USERNAME}
+spring.mail.password=${MAIL_PASSWORD}
+spring.mail.properties.mail.smtp.auth=true
+spring.mail.properties.mail.smtp.starttls.enable=true
+spring.mail.properties.mail.debug=true
+email.service.from.email=2016mehrab@gmail.com
+
+# Revoked token cleanup
+revoked_token_cleanup_interval=${REVOKED_TOKEN_CLEANUP_INTERVAL}
+
+# CORS
+cors.allowed-origins=${CORS_ALLOWED_ORIGINS}
+
+# Image upload directory
+image-storage-directory=${IMAGE_STORAGE_DIRECTORY}
+
+# Email queue
+email.queue.schedule-rate=${EMAIL_QUEUE_SCHEDULE_RATE}
+```
+example:
+```properties
+SPRING_DATASOURCE_URL=jdbc:postgresql://localhost:5432/minimal_blog
+SPRING_DATASOURCE_USERNAME=db_username
+SPRING_DATASOURCE_PASSWORD=db_password
+JWT_SECRET=your_jwt_secret
+MAIL_USERNAME=yourmail@gmail.com
+MAIL_PASSWORD=the_password_you_got_after_your_mail_configuration
+REVOKED_TOKEN_CLEANUP_INTERVAL=60000
+SERVER_PORT=8081
+CORS_ALLOWED_ORIGINS=https://minimal-blog-mehrab.netlify.app,http://localhost:5173
+IMAGE_STORAGE_DIRECTORY=./uploads/images
+EMAIL_QUEUE_SCHEDULE_RATE=300000
+```
+### Running locally:
+1.  **Prerequisites:** Java 21+, postgreSQL.
+2.  **Clone Repository:** `git clone https://github.com/2016mehrab/minimal-blog-api.git && cd minimal-blog-api`
+3.  **Configuration:** Customize `application.properties`. Refer to the `Environment-Variables` section.
+4.  **Run:**
+    ```bash
+    ./mvnw clean package -DskipTests
+    ```
+### Running with docker( May not be upto date ):
 1.  **Prerequisites:** Ensure Java 21+, Docker, and Maven are installed.
 2.  **Clone Repository:** `git clone https://github.com/2016mehrab/minimal-blog-api.git && cd minimal-blog-api`
 3.  **Configuration:** Customize `application.properties` in `src/main/resources/` for local application settings. Refer to `application-example.properties` for guidance.
